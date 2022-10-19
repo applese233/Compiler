@@ -14,5 +14,8 @@ import Parser.MxLiteParser;
 import java.util.ArrayList;
 
 public class ASTBuilder {
-	
+	@Override
+	public ASTNode VisitConstant(MxLiteParser.ConstantContext ctx) {
+		
+	}
 }

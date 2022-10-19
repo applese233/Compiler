@@ -13,6 +13,11 @@ public class Type {
 	public Type functionReturnType;
 	public ArrayList<Type> functionParameters;
 
+	public Type(basicType _type, int _dim) {
+		type = _type;
+		dim = _dim;
+	}
+
 	public Type(basicType _type, int _dim, boolean _isLeftValue) {
 		type = _type;
 		dim = _dim;
