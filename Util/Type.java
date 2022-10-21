@@ -90,6 +90,33 @@ public class Type {
 			struct = null;
 	}
 
+	public Type(Type _type, int _dim) {
+		type = _type.type;
+		identifier = _type.identifier;
+		dim = _dim;
+		isLeftValue = _type.isLeftValue;
+		if(_type.functionReturnType != null)
+			functionReturnType = new Type(_type.functionReturnType);
+		else
+			functionReturnType = null;
+		if(_type.functionParameters != null)
+			functionParameters = new ArrayList<>(_type.functionParameters);
+		else
+			functionParameters = null;
+		if(_type.varMap != null)
+			varMap = new HashMap<>(_type.varMap);
+		else
+			varMap = null;
+		if(_type.funcMap != null)
+			funcMap = new HashMap<>(_type.funcMap);
+		else
+			funcMap = null;
+		if(_type.struct != null)
+			struct = new Type(_type.struct);
+		else
+			struct = null;
+	}
+
 	public Type(Type _type, String _identifier) {
 		type = _type.type;
 		identifier = _identifier;
