@@ -2,11 +2,15 @@ package frontend;
 
 import AST.*;
 import AST.DefNode.*;
+import AST.ExprNode.BinaryExprNode;
+import AST.ExprNode.ExprListNode;
 import AST.ExprNode.FuncExprNode;
 import AST.ExprNode.IdExprNode;
 import AST.ExprNode.IndexExprNode;
 import AST.ExprNode.IntExprNode;
 import AST.ExprNode.LambdaExprNode;
+import AST.ExprNode.NewExprNode;
+import AST.ExprNode.PreExprNode;
 import AST.ExprNode.PureExprStmtNode;
 import AST.ExprNode.SufExprNode;
 import AST.ExprNode.ThisExprNode;
@@ -415,5 +419,136 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(SufExprNode it) {
 		it.expr.Accept(this);
 		
+		if(it.expr.type.type != Int) {
+			throw new semanticError("Error Type of Suffix Expression", it.pos);
+		}
+
+		if(!it.expr.assign) {
+			throw new semanticError("Suffix Assign Error", it.pos);
+		}
+		it.type = it.expr.type;
+	}
+
+	@Override
+	public void Visit(PreExprNode it) {
+		it.expr.Accept(this);
+		switch(it.op) {
+			case "++", "--" -> {
+				if(it.expr.type.type != Int) {
+					throw new semanticError("Error Type of Prefix Expression", it.pos);
+				}
+				if(!it.expr.assign) {
+					throw new semanticError("Prefix Assign Error", it.pos);
+				}
+				it.assign = true;
+				it.type = new Type(Int, 0);
+			}
+			case "+", "-", "~" -> {
+				if(it.expr.type.type != Int) {
+					throw new semanticError("Error Type of Prefix Expression", it.pos);
+				}
+				it.type = new Type(Int, 0);
+			}
+			case "!" -> {
+				if(it.expr.type.type != Bool) {
+					throw new semanticError("Error Type of Prefix Expression", it.pos);
+				}
+				it.type = new Type(Bool, 0);
+			}
+			default -> {
+				throw new semanticError("Error Prefix Expression", it.pos);
+			}
+		}
+	}
+
+	@Override
+	public void Visit(NewExprNode it) {
+		if(it.exprList != null) {
+			it.exprList.forEach(x -> {
+				x.Accept(this);
+				if(x.type.type != Int) {
+					throw new semanticError("New Array's Parameter Error", it.pos);
+				}
+			});
+		}
+		it.type = globalScope.TypeGet(it.typeNode);
+	}
+
+	@Override
+	public void Visit(BinaryExprNode it) {
+		it.expr1.Accept(this);
+		it.expr2.Accept(this);
+
+		if(it.expr1.type.type == Null) {
+			throw new semanticError("Binary Expression Expr1's Type Error", it.pos);
+		}
+
+		switch(it.op) {
+			case "-", "*", "/", "%", "<<", ">>", "&", "|", "^" -> {
+				if(it.expr1.type.type != Int || it.expr2.type.type != Int) {
+					throw new semanticError("Error Type of Binary Expression", it.pos);
+				}
+				it.type = new Type(Int, 0);
+				break;
+			}
+			case "+" -> {
+				if(it.expr1.type.type == Int && it.expr2.type.type == Int) {
+					it.type = new Type(Int, 0);
+				}
+				else if(it.expr1.type.type == String && it.expr2.type.type == String) {
+					it.type = new Type(String, 0);
+				}
+				else {
+					throw new semanticError("Error Type of Binary Expression", it.pos);
+				}
+				break;
+			}
+			case "<", ">", "<=", ">=" -> {
+				if((it.expr1.type.type == Int && it.expr2.type.type == Int) || (it.expr1.type.type == String && it.expr2.type.type == String)) {
+					it.type = new Type(Bool, 0);
+				}
+				else {
+					throw new semanticError("Error Type of Binary Expression", it.pos);
+				}
+				break;
+			}
+			case "&&", "||" -> {
+				if(it.expr1.type.type == Bool && it.expr2.type.type == Bool) {
+					it.type = new Type(Bool, 0);
+				}
+				else {
+					throw new semanticError("Error Type of Binary Expression", it.pos);
+				}
+				break;
+			}
+			case "==", "!=" -> {
+				if(it.expr1.type.type == it.expr2.type.type) {
+					it.type = new Type(Bool, 0);
+				}
+				else {
+					throw new semanticError("Error Type of Binary Expression", it.pos);
+				}
+				break;
+			}
+			case "=" -> {
+				if(it.expr1.type.type != it.expr2.type.type) {
+					throw new semanticError("Error Type of Binary Expression", it.pos);
+				}
+				if(!it.expr1.assign) {
+					throw new semanticError("Expression wasn't assigned", it.pos);
+				}
+				it.assign = true;
+				it.type = it.expr1.type;
+				break;
+			}
+			default -> {
+				throw new semanticError("Invalid Binary Operator", it.pos);
+			}
+		}
+	}
+
+	@Override
+	public void Visit(ExprListNode it) {
+		it.exprList.forEach(x -> x.Accept(this));
 	}
 }
