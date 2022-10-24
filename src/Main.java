@@ -14,7 +14,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 public class Main {
-	public static void Main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		String name = "test.mx";
 		InputStream input = System.in;
 		try {
@@ -37,6 +37,10 @@ public class Main {
 			globalScope.varMap.clear();
 			new SemanticChecker(globalScope).Visit(ASTRoot);
 
+		}
+		catch (Error error) {
+			System.err.println(error.toString());
+			throw new RuntimeException();
 		}
 	}
 }
