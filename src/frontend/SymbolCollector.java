@@ -13,40 +13,40 @@ public class SymbolCollector implements ASTVisitor {
 	public Scope globalScope, nowScope;
 	public String nowClass = null;
 
-	public SymbolCollector(scope _globalScope) {
+	public SymbolCollector(Scope _globalScope) {
 		globalScope = _globalScope;
 
-		globalScope.typeMap.put("int", new Type(Int, 0));
-		globalScope.typeMap.put("bool", new Type(Bool, 0));
-		globalScope.typeMap.put("string", new Type(String, 0));
-		globalScope.typeMap.put("null", new Type(Null, 0));
-		globalScope.typeMap.put("void", new Type(Void, 0));
+		globalScope.typeMap.put("int", new Type(Type.basicType.Int, 0));
+		globalScope.typeMap.put("bool", new Type(Type.basicType.Bool, 0));
+		globalScope.typeMap.put("string", new Type(Type.basicType.String, 0));
+		globalScope.typeMap.put("null", new Type(Type.basicType.Null, 0));
+		globalScope.typeMap.put("void", new Type(Type.basicType.Void, 0));
 
 		ArrayList<Type> paratmp1 = new ArrayList<>();
-		paratmp1.add(new Type(String, "str"));
-		Type tmp1 = new Type("print", new Type(Void, 0), paratmp1);
+		paratmp1.add(new Type(Type.basicType.String, "str"));
+		Type tmp1 = new Type("print", new Type(Type.basicType.Void, 0), paratmp1);
 		globalScope.funcMap.put("print", tmp1);
 
-		Type tmp2 = new Type("println", new Type(Void, 0), paratmp1);
+		Type tmp2 = new Type("println", new Type(Type.basicType.Void, 0), paratmp1);
 		globalScope.funcMap.put("println", tmp2);
 
 		ArrayList<Type> paratmp2 = new ArrayList<>();
-		paratmp2.add(new Type(Int, "n"));
-		Type tmp3 = new Type("printInt", new Type(Void, 0), paratmp2);
+		paratmp2.add(new Type(Type.basicType.Int, "n"));
+		Type tmp3 = new Type("printInt", new Type(Type.basicType.Void, 0), paratmp2);
 		globalScope.funcMap.put("printInt", tmp3);
 
-		Type tmp4 = new Type("printlnInt", new Type(Void, 0), paratmp2);
+		Type tmp4 = new Type("printlnInt", new Type(Type.basicType.Void, 0), paratmp2);
 		globalScope.funcMap.put("printlnInt", tmp4);
 
-		Type tmp5 = new Type("getString", new Type(String, 0), new ArrayList<>());
+		Type tmp5 = new Type("getString", new Type(Type.basicType.String, 0), new ArrayList<>());
 		globalScope.funcMap.put("getString", tmp5);
 
-		Type tmp6 = new Type("getInt", new Type(Int, 0), new ArrayList<>());
+		Type tmp6 = new Type("getInt", new Type(Type.basicType.Int, 0), new ArrayList<>());
 		globalScope.funcMap.put("getInt", tmp6);
 
 		ArrayList<Type> paratmp3 = new ArrayList<>();
-		paratmp3.add(new Type(Int, "i"));
-		Type tmp7 = new Type("toString", new Type(String, 0), paratmp3);
+		paratmp3.add(new Type(Type.basicType.Int, "i"));
+		Type tmp7 = new Type("toString", new Type(Type.basicType.String, 0), paratmp3);
 		globalScope.funcMap.put("toString", tmp7);
 
 	}
@@ -64,14 +64,17 @@ public class SymbolCollector implements ASTVisitor {
 
 	@Override
 	public void Visit(FuncDefNode it) {
-		nowScope.NewFunc(it.id, new Type(it.type), it.pos);
+		nowScope.NewFunc(it.id, new Type(it.type.type), it.pos);
 		Type tmp;
 		if(nowClass == null)
 			tmp = globalScope.funcMap.get(it.id);
 		else
 			tmp = ((Type)globalScope.typeMap.get(nowClass)).funcMap.get(it.id);
-		tmp.type = globalScope.TypeGet(it.type);
-		it.paralist.forEach(x -> tmp.paralist.add(new Type(globalScope.TypeGet(x.type), x.id)));
+		tmp = globalScope.TypeGet(it.type);
+		for(int i = 0; i < it.paralist.size(); ++ i) {
+			tmp.functionParameters.add(new Type(globalScope.TypeGet(it.paralist.get(i).type), it.paralist.get(i).id));
+		}
+		// it.paralist.forEach(x -> tmp.functionParameters.add(new Type(globalScope.TypeGet(x.type), x.id)));
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public class SymbolCollector implements ASTVisitor {
 		it.varlist.forEach(x -> x.Accept(this));
 		it.funclist.forEach(x -> x.Accept(this));
 		if(it.struct != null)
-			res.struct = new Type(it.id, new Type(Void, 0), new ArrayList<>());
+			res.struct = new Type(it.id, new Type(Type.basicType.Void, 0), new ArrayList<>());
 		res.varMap = nowScope.varMap;
 		res.funcMap = nowScope.funcMap;
 		nowScope = nowScope.pScope;
@@ -92,13 +95,13 @@ public class SymbolCollector implements ASTVisitor {
 
 	@Override
 	public void Visit(VarDecStmtNode it) {
-		nowScope.NewVar(it,id, new Type(it.id), it.pos);
+		nowScope.NewVar(it.id, new Type(it.id), it.pos);
 		Type tmp;
 		if(nowClass == null)
 			tmp = globalScope.varMap.get(it.id);
 		else
 			tmp = ((Type)globalScope.typeMap.get(nowClass)).varMap.get(it.id);
-		tmp.type = globalScope.TypeGet(it.type);
+		tmp = globalScope.TypeGet(it.type);
 	}
 
 	@Override

@@ -3,8 +3,6 @@ package Util;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.lang.model.util.ElementScanner14;
-
 public class Type {
 	public enum basicType {
 		Int, Bool, String, Void, Class, Function, This, Null
@@ -17,6 +15,7 @@ public class Type {
 	public ArrayList<Type> functionParameters;
 	public HashMap<String, Type> varMap;
 	public HashMap<String, Type> funcMap;
+	public HashMap<String, Type> typeMap;
 	public Type struct = null;
 
 	public Type(String _identifier) {

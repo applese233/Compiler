@@ -3,6 +3,8 @@ package AST;
 import AST.DefNode.*;
 import AST.ExprNode.*;
 import AST.StmtNode.*;
+import AST.ProgNode;
+import AST.TypeNode;
 
 public interface ASTVisitor {
 	void Visit(ProgNode it);

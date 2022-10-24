@@ -14,11 +14,12 @@ import AST.ExprNode.PreExprNode;
 import AST.ExprNode.PureExprStmtNode;
 import AST.ExprNode.SufExprNode;
 import AST.ExprNode.ThisExprNode;
-import AST.exprNode.*;
+import AST.ExprNode.*;
 import AST.StmtNode.*;
 import Util.*;
 import Util.error.error;
 import Util.error.semanticError;
+import Util.Scope;
 
 import java.util.Objects;
 
@@ -33,7 +34,7 @@ public class SemanticChecker implements ASTVisitor {
 	
 	public Type nowClass = null;
 
-	public SemanticChecker(scope _globalScope) {
+	public SemanticChecker(Scope _globalScope) {
 		depth = 0;
 		globalScope = _globalScope;
 	}
@@ -43,7 +44,7 @@ public class SemanticChecker implements ASTVisitor {
 		nowScope = globalScope;
 
 		Type mainFunc = nowScope.FuncGet("main", false, it.pos);
-		if(!mainFunc.type != Int) {
+		if(mainFunc.type != Type.basicType.Int) {
 			throw new semanticError("Return type of main Error.", it.pos);
 		}
 		if(mainFunc.functionParameters.size() != 0) {
@@ -62,8 +63,8 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(FuncDefNode it) {
 		nowScope = new Scope(nowScope);
 		
-		if(it.functionParameters != null) {
-			it.functionParameters.forEach(x -> nowScope.NewVar(x.id, new Type(globalScope.TypeGet(x.type), x.id), x.pos));
+		if(it.paralist != null) {
+			it.paralist.forEach(x -> nowScope.NewVar(x.id, new Type(globalScope.TypeGet(x.type), x.id), x.pos));
 		}
 		
 		hasReturn = false;
@@ -71,7 +72,7 @@ public class SemanticChecker implements ASTVisitor {
 			returnType = globalScope.TypeGet(it.type);
 		}
 		else {
-			returnType = new Type(Void, 0);
+			returnType = new Type(Type.basicType.Void, 0);
 		}
 		
 		it.suite.Accept(this);
@@ -88,7 +89,7 @@ public class SemanticChecker implements ASTVisitor {
 
 	@Override
 	public void Visit(ClassDefNode it) {
-		nowScopre = newScope(nowScope);
+		nowScope = new Scope(nowScope);
 
 		nowClass = (Type)globalScope.typeMap.get(it.id);
 		nowClass.varMap.forEach((x, y) -> nowScope.NewVar(x, y, it.pos));
@@ -110,15 +111,15 @@ public class SemanticChecker implements ASTVisitor {
 
 	@Override
 	public void Visit(VarDecStmtNode it) {
-		Type tmp = globalScope.typeGet(it.type);
+		Type tmp = globalScope.TypeGet(it.type);
 
-		if(tmp.type == Void) {
+		if(tmp.type == Type.basicType.Void) {
 			throw new semanticError("Variable Type Error", it.pos);
 		}
 		
 		if(it.expr != null) {
 			it.expr.Accept(this);
-			if(!it.expr.type.type == tmp.type) {
+			if(it.expr.type.type != tmp.type) {
 				throw new semanticError("Variable Type not equal to Expr Type", it.pos);
 			}
 		}
@@ -134,7 +135,7 @@ public class SemanticChecker implements ASTVisitor {
 	@Override
 	public void Visit(SuiteStmtNode it) {
 		it.stmtList.forEach(x -> {
-			if(x instanceof suiteStmtNode) {
+			if(x instanceof SuiteStmtNode) {
 				nowScope = new Scope(nowScope);
 				x.Accept(this);
 				nowScope = nowScope.pScope;
@@ -148,10 +149,36 @@ public class SemanticChecker implements ASTVisitor {
 	@Override
 	public void Visit(IfStmtNode it) {
 		it.expr.Accept(this);
-		if(!it.expr.type.type != Bool) {
-			throw new semanticError("IfContidion Type Error", it.pos);
+		if(it.expr.type.type != Type.basicType.Bool) {
+			throw new semanticError("If Contidion Type Error", it.pos);
 		}
 
+		nowScope = new Scope(nowScope);
+		it.trueStmt.Accept(this);
+		nowScope = nowScope.pScope;
+
+		if(it.falseStmt != null) {
+			nowScope = new Scope(nowScope);
+			it.falseStmt.Accept(this);
+			nowScope = nowScope.pScope;
+		}
+	}
+
+	@Override
+	public void Visit(ForStmtNode it) {
+		if(it.init != null) {
+			it.init.Accept(this);
+		}
+		if(it.cond != null) {
+			it.cond.Accept(this);
+			if(it.cond.type.type != Type.basicType.Bool) {
+				throw new semanticError("For Condition Type Error", it.pos);
+			}
+		}
+		if(it.incr != null) {
+			it.incr.Accept(this);
+		}
+		
 		++ depth;
 		nowScope = new Scope(nowScope);
 
@@ -162,20 +189,12 @@ public class SemanticChecker implements ASTVisitor {
 	}
 
 	@Override
-	public void Visit(ForStmtNode it) {
-		if(it.init != null) {
-			it.init.Accept(this);
+	public void Visit(WhileStmtNode it) {
+		it.expr.Accept(this);
+		if(it.expr.type.type != Type.basicType.Bool) {
+			throw new semanticError("While Condition Type Error", it.pos);
 		}
-		if(it.cond != null) {
-			it.cond.Accept(this);
-			if(it.cond.type.type != Bool) {
-				throw new semanticError("ForCondition Type Error", it.pos);
-			}
-		}
-		if(it.incr != null) {
-			it.incr.Accept(this);
-		}
-		
+
 		++ depth;
 		nowScope = new Scope(nowScope);
 
@@ -201,10 +220,10 @@ public class SemanticChecker implements ASTVisitor {
 		}
 		else {
 			if(lambdaReturn) {
-				lambaType = new Type(Void, 0);
+				lambdaType = new Type(Type.basicType.Void, 0);
 			}
 			else {
-				if(returnType.type != Void) {
+				if(returnType.type != Type.basicType.Void) {
 					throw new semanticError("Return Type not Equal", it.pos);
 				}
 			}
@@ -235,22 +254,22 @@ public class SemanticChecker implements ASTVisitor {
 
 	@Override
 	public void Visit(IntExprNode it) {
-		it.type = new Type(Int, 0);
+		it.type = new Type(Type.basicType.Int, 0);
 	}
 
 	@Override
 	public void Visit(BoolExprNode it) {
-		it.type = new Type(Bool, 0);
+		it.type = new Type(Type.basicType.Bool, 0);
 	}
 
 	@Override
 	public void Visit(StringExprNode it) {
-		it.type = new Type(String, 0);
+		it.type = new Type(Type.basicType.String, 0);
 	}
 
 	@Override
 	public void Visit(NullExprNode it) {
-		it.type = new Type(Null, 0);
+		it.type = new Type(Type.basicType.Null, 0);
 	}
 
 	@Override
@@ -269,7 +288,7 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(LambdaExprNode it) {
 		nowScope = new Scope(nowScope);
 
-		if(it.functionParameters.size() != it.exprList.exprList.size()) {
+		if(it.paralist.size() != it.exprList.exprList.size()) {
 			throw new semanticError("Number of parameters in lambda expr not match", it.pos);
 		}
 
@@ -277,13 +296,13 @@ public class SemanticChecker implements ASTVisitor {
 			it.exprList.exprList.forEach(x -> x.Accept(this));
 		}
 
-		if(it.functionParameters != null) {
-			it.functionParameters.forEach(x -> nowScope.NewVar(x.id, new Type(globalScope.TypeGet(x.type), x.id), x.pos));
+		if(it.paralist != null) {
+			it.paralist.forEach(x -> nowScope.NewVar(x.id, new Type(globalScope.TypeGet(x.type), x.id), x.pos));
 		}
 
-		if(it.functionParameters != null) {
-			for(int i = 0; i < it.functionParameters.size(); ++ i) {
-				if(!globalScope.TypeGet(it.functionParameters.get(i).type).type != it.exprList.exprList.get(i).type.type) {
+		if(it.paralist != null) {
+			for(int i = 0; i < it.paralist.size(); ++ i) {
+				if(globalScope.TypeGet(it.paralist.get(i).type).type != it.exprList.exprList.get(i).type.type) {
 					throw new semanticError("Type of parameters in lambda not match", it.pos);
 				}
 			}
@@ -295,7 +314,7 @@ public class SemanticChecker implements ASTVisitor {
 		it.suite.Accept(this);
 
 		if(!hasReturn) {
-			it.type = new Type(Void, 0);
+			it.type = new Type(Type.basicType.Void, 0);
 		}
 		else {
 			it.type = lambdaType;
@@ -315,7 +334,7 @@ public class SemanticChecker implements ASTVisitor {
 			it.id.Accept(this);
 		}
 
-		if(it.id.type.type != Function) {
+		if(it.id.type.type != Type.basicType.Function) {
 			throw new semanticError("Function Undefined", it.pos);
 		}
 
@@ -344,7 +363,7 @@ public class SemanticChecker implements ASTVisitor {
 			throw new semanticError("Undefined Array", it.pos);
 		}
 
-		if(it.off.type.type != Int) {
+		if(it.off.type.type != Type.basicType.Int) {
 			throw new semanticError("Invalid offset", it.pos);
 		}
 
@@ -356,47 +375,47 @@ public class SemanticChecker implements ASTVisitor {
 	}
 
 	@Override
-	public void Visit(ClassExprType it) {
+	public void Visit(ClassExprNode it) {
 		it.name.Accept(this);
 
 		if(it.name.type.dim != 0 && it.isFunc && it.id.equals("size")) {
 			Type res = new Type("size");
-			res.type = new Type(Int, 0);
+			res.type = Type.basicType.Int;
 			it.type = res;
 			return;
 		}
 
-		if(it.name.type.type == String && it.isFunc && it.id.equals("length")) {
+		if(it.name.type.type == Type.basicType.String && it.isFunc && it.id.equals("length")) {
 			Type res = new Type("length");
-			res.type = new Type(Int, 0);
+			res.type = Type.basicType.Int;
 			it.type = res;
 			return;
 		}
 
-		if(it.name.type.type == String && it.isFunc && it.id.equals("substring")) {
+		if(it.name.type.type == Type.basicType.String && it.isFunc && it.id.equals("substring")) {
 			Type res = new Type("substring");
-			res.type = new Type(String, 0);
-			res.functionParameters.add(new Type(Int, "left"));
-			res.functionParameters.add(new Type(Int, "right"));
+			res.type = Type.basicType.String;
+			res.functionParameters.add(new Type(Type.basicType.Int, "left"));
+			res.functionParameters.add(new Type(Type.basicType.Int, "right"));
 			it.type = res;
 			return;
 		}
 
-		if(it.name.type.type == String && it.isFunc && it.id.equals("parseInt")) {
+		if(it.name.type.type == Type.basicType.String && it.isFunc && it.id.equals("parseInt")) {
 			Type res = new Type("parseInt");
-			res.type = new Type(Int, 0);;
+			res.type = Type.basicType.Int;
 			it.type = res;
 			return;
 		}
 
-		if(it.name.type.type == String && it.isFunc && it.id.equals("ord")) {
+		if(it.name.type.type == Type.basicType.String && it.isFunc && it.id.equals("ord")) {
 			Type res = new Type("ord");
-			res.type = new Type(Int, 0);
-			res.functionParameters.add(New Type(New Type(Int, 0), "pos"));
+			res.type = Type.basicType.Int;
+			res.functionParameters.add(new Type(new Type(Type.basicType.Int, 0), "pos"));
 			return;
 		}
 
-		if(it.name.type.type != Class) {
+		if(it.name.type.type != Type.basicType.Class) {
 			throw new semanticError("Class Undefined", it.pos);
 		}
 		
@@ -419,7 +438,7 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(SufExprNode it) {
 		it.expr.Accept(this);
 		
-		if(it.expr.type.type != Int) {
+		if(it.expr.type.type != Type.basicType.Int) {
 			throw new semanticError("Error Type of Suffix Expression", it.pos);
 		}
 
@@ -433,29 +452,32 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(PreExprNode it) {
 		it.expr.Accept(this);
 		switch(it.op) {
-			case "++", "--" -> {
-				if(it.expr.type.type != Int) {
+			case "++":
+			case "--": {
+				if(it.expr.type.type != Type.basicType.Int) {
 					throw new semanticError("Error Type of Prefix Expression", it.pos);
 				}
 				if(!it.expr.assign) {
 					throw new semanticError("Prefix Assign Error", it.pos);
 				}
 				it.assign = true;
-				it.type = new Type(Int, 0);
+				it.type.type = Type.basicType.Int;
 			}
-			case "+", "-", "~" -> {
-				if(it.expr.type.type != Int) {
+			case "+":
+			case "-":
+			case "~": {
+				if(it.expr.type.type != Type.basicType.Int) {
 					throw new semanticError("Error Type of Prefix Expression", it.pos);
 				}
-				it.type = new Type(Int, 0);
+				it.type.type = Type.basicType.Int;
 			}
-			case "!" -> {
-				if(it.expr.type.type != Bool) {
+			case "!": {
+				if(it.expr.type.type != Type.basicType.Bool) {
 					throw new semanticError("Error Type of Prefix Expression", it.pos);
 				}
-				it.type = new Type(Bool, 0);
+				it.type.type = Type.basicType.Int;
 			}
-			default -> {
+			default: {
 				throw new semanticError("Error Prefix Expression", it.pos);
 			}
 		}
@@ -466,7 +488,7 @@ public class SemanticChecker implements ASTVisitor {
 		if(it.exprList != null) {
 			it.exprList.forEach(x -> {
 				x.Accept(this);
-				if(x.type.type != Int) {
+				if(x.type.type != Type.basicType.Int) {
 					throw new semanticError("New Array's Parameter Error", it.pos);
 				}
 			});
@@ -479,58 +501,71 @@ public class SemanticChecker implements ASTVisitor {
 		it.expr1.Accept(this);
 		it.expr2.Accept(this);
 
-		if(it.expr1.type.type == Null) {
+		if(it.expr1.type.type == Type.basicType.Null) {
 			throw new semanticError("Binary Expression Expr1's Type Error", it.pos);
 		}
 
 		switch(it.op) {
-			case "-", "*", "/", "%", "<<", ">>", "&", "|", "^" -> {
-				if(it.expr1.type.type != Int || it.expr2.type.type != Int) {
+			case "-":
+			case "*":
+			case "/":
+			case "%":
+			case "<<":
+			case ">>":
+			case "&":
+			case "|":
+			case "^": {
+				if(it.expr1.type.type != Type.basicType.Int || it.expr2.type.type != Type.basicType.Int) {
 					throw new semanticError("Error Type of Binary Expression", it.pos);
 				}
-				it.type = new Type(Int, 0);
+				it.type.type = Type.basicType.Int;
 				break;
 			}
-			case "+" -> {
-				if(it.expr1.type.type == Int && it.expr2.type.type == Int) {
-					it.type = new Type(Int, 0);
+			case "+": {
+				if(it.expr1.type.type == Type.basicType.Int && it.expr2.type.type == Type.basicType.Int) {
+					it.type.type = Type.basicType.Int;
 				}
-				else if(it.expr1.type.type == String && it.expr2.type.type == String) {
-					it.type = new Type(String, 0);
+				else if(it.expr1.type.type == Type.basicType.String && it.expr2.type.type == Type.basicType.String) {
+					it.type.type = Type.basicType.String;
 				}
 				else {
 					throw new semanticError("Error Type of Binary Expression", it.pos);
 				}
 				break;
 			}
-			case "<", ">", "<=", ">=" -> {
-				if((it.expr1.type.type == Int && it.expr2.type.type == Int) || (it.expr1.type.type == String && it.expr2.type.type == String)) {
-					it.type = new Type(Bool, 0);
+			case "<":
+			case ">":
+			case "<=":
+			case ">=": {
+				if((it.expr1.type.type == Type.basicType.Int && it.expr2.type.type == Type.basicType.Int) || (it.expr1.type.type == Type.basicType.String && it.expr2.type.type == Type.basicType.String)) {
+					it.type.type = Type.basicType.Bool;
 				}
 				else {
 					throw new semanticError("Error Type of Binary Expression", it.pos);
 				}
 				break;
 			}
-			case "&&", "||" -> {
-				if(it.expr1.type.type == Bool && it.expr2.type.type == Bool) {
-					it.type = new Type(Bool, 0);
+			case "&&":
+			case "||": {
+				if(it.expr1.type.type == Type.basicType.Bool && it.expr2.type.type == Type.basicType.Bool) {
+					it.type.type = Type.basicType.Bool;
 				}
 				else {
 					throw new semanticError("Error Type of Binary Expression", it.pos);
 				}
 				break;
 			}
-			case "==", "!=" -> {
+			case "==":
+			case "!=": {
 				if(it.expr1.type.type == it.expr2.type.type) {
-					it.type = new Type(Bool, 0);
+					it.type.type = Type.basicType.Bool;
 				}
 				else {
 					throw new semanticError("Error Type of Binary Expression", it.pos);
 				}
 				break;
 			}
-			case "=" -> {
+			case "=": {
 				if(it.expr1.type.type != it.expr2.type.type) {
 					throw new semanticError("Error Type of Binary Expression", it.pos);
 				}
@@ -541,7 +576,7 @@ public class SemanticChecker implements ASTVisitor {
 				it.type = it.expr1.type;
 				break;
 			}
-			default -> {
+			default: {
 				throw new semanticError("Invalid Binary Operator", it.pos);
 			}
 		}

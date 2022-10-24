@@ -29,11 +29,10 @@ public class Main {
 			parser.addErrorListener(new MxLiteErrorListener());
 
 			ParseTree parseTreeRoot = parser.program();
-			ASTBuilder astBuilder = newASTBuilder();
-			ASTRoot = (ProgNode)astBuilder.Visit(parseTreeRoot);
+			ASTBuilder astBuilder = new ASTBuilder();
+			ASTRoot = (ProgNode)astBuilder.visit(parseTreeRoot);
 
 			new SymbolCollector(globalScope).Visit(ASTRoot);
-			new TypeCollector(globalScope).Visit(ASTRoot);
 			globalScope.varMap.clear();
 			new SemanticChecker(globalScope).Visit(ASTRoot);
 

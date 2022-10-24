@@ -6,7 +6,7 @@ import AST.StmtNode.*;
 
 import java.util.ArrayList;
 
-public abstract class ClassDefNode extends ASTNode {
+public class ClassDefNode extends ASTNode {
 	public String id;
 	public ArrayList<VarDecStmtNode> varlist = new ArrayList<>();
 	public ArrayList<FuncDefNode> funclist = new ArrayList<>();

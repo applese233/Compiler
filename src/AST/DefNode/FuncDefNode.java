@@ -8,7 +8,7 @@ import AST.StmtNode.*;
 
 import java.util.ArrayList;
 
-public abstract class FuncDefNode extends ASTNode {
+public class FuncDefNode extends ASTNode {
 	public TypeNode type;
 	public String id;
 	public ArrayList<VarDecStmtNode> paralist = new ArrayList<>();
