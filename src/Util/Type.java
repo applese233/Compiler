@@ -142,4 +142,19 @@ public class Type {
 		else
 			struct = null;
 	}
+
+	public boolean TypeEqual(Type _type) {
+		System.out.println(type + " " + dim + " " + identifier + " " + _type.type + " " + _type.dim + " " + _type.identifier);
+		if(type == basicType.Class && _type.type == basicType.Null)
+			return true;
+		if(type == basicType.Class && _type.type == basicType.Class && identifier.equals(_type.identifier))
+			return true;
+		if(dim > 0 && _type.type == basicType.Null)
+			return true;
+		if(dim > 0 && type == _type.type && dim == _type.dim)
+			return true;
+		if(type == _type.type)
+			return true;
+		return false;
+	}
 }

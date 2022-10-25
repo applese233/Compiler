@@ -13,6 +13,10 @@ public class VarDecStmtNode extends StmtNode {
 		super(_pos);
 		id = _id;
 		expr = _expr;
+		if(_expr != null) {
+			expr.assign = true;
+			System.out.println(_pos + " " + id + " " + expr + " " + expr.assign);
+		}
 	}
 
 	@Override

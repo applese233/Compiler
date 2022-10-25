@@ -24,6 +24,7 @@ public class Scope {
 	}
 
 	public void NewVar(String id, Type type, position pos) {
+		System.out.println(id + " " + type.type + " " + type.dim);
 		if(Exist(id, true, pos))
 			throw new semanticError("Variable Conflict", pos);
 		if(varMap.containsKey(id))
@@ -32,6 +33,7 @@ public class Scope {
 	}
 
 	public void NewFunc(String id, Type type, position pos) {
+		System.out.println("New Func: " + id + " " + type.type + " " + type.functionParameters);
 		if(Exist(id, true, pos))
 			throw new semanticError("Function Conflict", pos);
 		if(funcMap.containsKey(id))
@@ -40,6 +42,7 @@ public class Scope {
 	}
 
 	public void NewType(String id, Type type, position pos) {
+		System.out.println("NewType: " + id + " " + type.type + " " + pos);
 		if(typeMap.containsKey(id))
 			throw new semanticError("Type Conflict", pos);
 		typeMap.put(id, type);
@@ -54,17 +57,23 @@ public class Scope {
 	}
 
 	public Type FuncGet(String id, boolean up, position pos) {
+		System.out.println(id);
+		System.out.println(up);
+		System.out.println(pos);
 		if(funcMap.containsKey(id))
 			return funcMap.get(id);
-		if(up && pScope != null)
-			return pScope.VarGet(id, true, pos);
+		if(pScope != null)
+			return pScope.FuncGet(id, true, pos);
 		throw new semanticError("Undefined Function", pos);
 	}
 
 	public Type TypeGet(TypeNode type) {
-		if(type.dim == 0)
+		System.out.println(type.dim);
+		if(type.dim == 0) {
 			return typeMap.get(type.type);
-		else
+		}
+		else {
 			return new Type((typeMap.get(type.type)).type, type.dim);
+		}
 	}
 }

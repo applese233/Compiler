@@ -1,4 +1,4 @@
-// Generated from MxLite.g4 by ANTLR 4.7.2
+// Generated from Parser/MxLite.g4 by ANTLR 4.7.2
 package Parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
