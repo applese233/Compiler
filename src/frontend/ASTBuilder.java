@@ -48,7 +48,6 @@ public class ASTBuilder extends MxLiteBaseVisitor<ASTNode> {
 
 	@Override
 	public ASTNode visitVarDeclaration(MxLiteParser.VarDeclarationContext ctx) {
-		System.out.println("VarDec: " + ctx.Assign() + " " + ctx.expression() + " " + ctx.Identifier().getText());
 		if(ctx.expression() != null) {
 			System.out.println(visit(ctx.expression()));
 			VarDecStmtNode res = new VarDecStmtNode(new position(ctx), ctx.Identifier().getText(), (ExprNode)visit(ctx.expression()));

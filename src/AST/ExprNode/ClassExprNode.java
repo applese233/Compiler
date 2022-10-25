@@ -9,7 +9,7 @@ public class ClassExprNode extends ExprNode {
 	public boolean isFunc = false;
 
 	public ClassExprNode(position _pos, ExprNode _name, String _id) {
-		super(_pos);
+		super(_pos, true);
 		name = _name;
 		id = _id;
 	}

@@ -129,6 +129,7 @@ expression
 	| lambda                                                                                #lambdaExpr
 	| This                                                                                  #thisExpr
 	| Identifier                                                                            #idExpr
+	| expression '.' This                                                                   #classthisExpr
 	| expression '(' expressionList? ')'                                                    #funcExpr
 	| expr1=expression '[' expr2=expression ']'                                             #indexExpr
 	| expression '.' Identifier                                                             #classExpr

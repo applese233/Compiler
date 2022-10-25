@@ -1,4 +1,4 @@
-// Generated from Parser/MxLite.g4 by ANTLR 4.7.2
+// Generated from MxLite.g4 by ANTLR 4.7.2
 package Parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -172,13 +172,6 @@ public interface MxLiteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNewExpr(MxLiteParser.NewExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code indexExpr}
-	 * labeled alternative in {@link MxLiteParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIndexExpr(MxLiteParser.IndexExprContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code thisExpr}
 	 * labeled alternative in {@link MxLiteParser#expression}.
 	 * @param ctx the parse tree
@@ -192,13 +185,6 @@ public interface MxLiteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFuncExpr(MxLiteParser.FuncExprContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code lambdaExpr}
-	 * labeled alternative in {@link MxLiteParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLambdaExpr(MxLiteParser.LambdaExprContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code classExpr}
 	 * labeled alternative in {@link MxLiteParser#expression}.
@@ -234,6 +220,27 @@ public interface MxLiteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSubExpr(MxLiteParser.SubExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code indexExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIndexExpr(MxLiteParser.IndexExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code lambdaExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLambdaExpr(MxLiteParser.LambdaExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code classthisExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClassthisExpr(MxLiteParser.ClassthisExprContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code constExpr}
 	 * labeled alternative in {@link MxLiteParser#expression}.

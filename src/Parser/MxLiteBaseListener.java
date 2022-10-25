@@ -1,4 +1,4 @@
-// Generated from Parser/MxLite.g4 by ANTLR 4.7.2
+// Generated from MxLite.g4 by ANTLR 4.7.2
 package Parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -316,18 +316,6 @@ public class MxLiteBaseListener implements MxLiteListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIndexExpr(MxLiteParser.IndexExprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitIndexExpr(MxLiteParser.IndexExprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterThisExpr(MxLiteParser.ThisExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -347,18 +335,6 @@ public class MxLiteBaseListener implements MxLiteListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitFuncExpr(MxLiteParser.FuncExprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterLambdaExpr(MxLiteParser.LambdaExprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitLambdaExpr(MxLiteParser.LambdaExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -419,6 +395,42 @@ public class MxLiteBaseListener implements MxLiteListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSubExpr(MxLiteParser.SubExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterIndexExpr(MxLiteParser.IndexExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitIndexExpr(MxLiteParser.IndexExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterLambdaExpr(MxLiteParser.LambdaExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLambdaExpr(MxLiteParser.LambdaExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterClassthisExpr(MxLiteParser.ClassthisExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitClassthisExpr(MxLiteParser.ClassthisExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

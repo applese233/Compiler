@@ -8,7 +8,6 @@ public class TypeNode extends ASTNode {
 
 	public TypeNode(position _pos, String _type, int _dim) {
 		super(_pos);
-		System.out.println("Construct TypeNode: " + _pos + " " + _type + " " + _dim);
 		type = _type;
 		dim = _dim;
 	}

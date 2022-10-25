@@ -1,4 +1,4 @@
-// Generated from Parser/MxLite.g4 by ANTLR 4.7.2
+// Generated from MxLite.g4 by ANTLR 4.7.2
 package Parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -280,18 +280,6 @@ public interface MxLiteListener extends ParseTreeListener {
 	 */
 	void exitNewExpr(MxLiteParser.NewExprContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code indexExpr}
-	 * labeled alternative in {@link MxLiteParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterIndexExpr(MxLiteParser.IndexExprContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code indexExpr}
-	 * labeled alternative in {@link MxLiteParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitIndexExpr(MxLiteParser.IndexExprContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code thisExpr}
 	 * labeled alternative in {@link MxLiteParser#expression}.
 	 * @param ctx the parse tree
@@ -315,18 +303,6 @@ public interface MxLiteListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFuncExpr(MxLiteParser.FuncExprContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code lambdaExpr}
-	 * labeled alternative in {@link MxLiteParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterLambdaExpr(MxLiteParser.LambdaExprContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code lambdaExpr}
-	 * labeled alternative in {@link MxLiteParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitLambdaExpr(MxLiteParser.LambdaExprContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code classExpr}
 	 * labeled alternative in {@link MxLiteParser#expression}.
@@ -387,6 +363,42 @@ public interface MxLiteListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSubExpr(MxLiteParser.SubExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code indexExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterIndexExpr(MxLiteParser.IndexExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code indexExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitIndexExpr(MxLiteParser.IndexExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code lambdaExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterLambdaExpr(MxLiteParser.LambdaExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code lambdaExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitLambdaExpr(MxLiteParser.LambdaExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code classthisExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterClassthisExpr(MxLiteParser.ClassthisExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code classthisExpr}
+	 * labeled alternative in {@link MxLiteParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitClassthisExpr(MxLiteParser.ClassthisExprContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code constExpr}
 	 * labeled alternative in {@link MxLiteParser#expression}.

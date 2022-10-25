@@ -15,7 +15,6 @@ public class VarDecStmtNode extends StmtNode {
 		expr = _expr;
 		if(_expr != null) {
 			expr.assign = true;
-			System.out.println(_pos + " " + id + " " + expr + " " + expr.assign);
 		}
 	}
 

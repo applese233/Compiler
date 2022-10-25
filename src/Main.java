@@ -43,11 +43,14 @@ public class Main {
 
 			new SymbolCollector(globalScope).Visit(ASTRoot);
 			System.out.println("Symbol End.");
+			new TypeCollector(globalScope).Visit(ASTRoot);
+			System.out.println("Type End.");
 			globalScope.varMap.clear();
 			System.out.println(globalScope.typeMap.get("int").type);
 			new SemanticChecker(globalScope).Visit(ASTRoot);
 			System.out.println("Checker End.");
 
+			return;
 		}
 		catch (Error error) {
 			System.err.println(error.toString());
