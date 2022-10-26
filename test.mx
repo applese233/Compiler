@@ -1,4 +1,14 @@
+class A { int a;};
+class B { A b;  };
+class C { B c;  };
+class D { C d;  };
+class E { D e;  };
+class F { E f;  };
+class G { F g;  };
+G world = new G;
+void hello(int world) {
+}
 int main() {
-	int[] a = (new int[2][])[0];
-	return a[0];
+    hello(world.g.f.e.d.c.b.a);
+    return 0;
 }

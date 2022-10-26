@@ -50,7 +50,7 @@ public class TypeCollector implements ASTVisitor {
 
 	@Override
 	public void Visit(VarDecStmtNode it) {
-		System.out.println("TypeCollectVarDec: " + it.id);
+		System.out.println("TypeCollectVarDec: " + it.id + " " + it.type.type);
 		Type tmp;
 		if(nowClass == null) {
 			tmp = globalScope.varMap.get(it.id);
@@ -58,12 +58,23 @@ public class TypeCollector implements ASTVisitor {
 		else {
 			tmp = (globalScope.typeMap.get(nowClass)).varMap.get(it.id);
 		}
-		tmp.type = globalScope.TypeGet(it.type, it.pos).type;
+		// tmp = new Type(globalScope.TypeGet(it.type, it.pos));
+		Type now = globalScope.TypeGet(it.type, it.pos);
+		tmp.type = now.type;
+		tmp.funcMap = now.funcMap;
+		tmp.varMap = now.varMap;
+		tmp.dim = now.dim;
+		tmp.functionParameters = now.functionParameters;
+		tmp.functionReturnType = now.functionReturnType;
+		tmp.identifier = now.identifier;
+		tmp.isLeftValue = now.isLeftValue;
+		tmp.struct = now.struct;
+		System.out.println(tmp.type + " " + tmp.funcMap + " " + tmp.varMap);
 	}
 
 	@Override
 	public void Visit(VarDefStmtNode it) {
-		System.out.println("VarDef: " + it.pos);
+		
 	}
 
 	@Override

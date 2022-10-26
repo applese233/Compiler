@@ -24,7 +24,7 @@ public class Scope {
 	}
 
 	public void NewVar(String id, Type type, position pos) {
-		System.out.println(id + " " + type.type + " " + type.dim);
+		System.out.println("New Var: " + id + " " + type.type + " " + type.dim);
 		if(Exist(id, true, pos))
 			throw new semanticError("Variable Conflict", pos);
 		if(varMap.containsKey(id))
@@ -52,6 +52,7 @@ public class Scope {
 	}
 
 	public Type VarGet(String id, boolean up, position pos) {
+		System.out.println("VarGet: " + id + " " + up + " " + pos);
 		if(varMap.containsKey(id))
 			return varMap.get(id);
 		if(up && pScope != null)

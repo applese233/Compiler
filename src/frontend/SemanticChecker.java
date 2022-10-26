@@ -49,7 +49,7 @@ public class SemanticChecker implements ASTVisitor {
 
 	@Override
 	public void Visit(FuncDefNode it) {
-		System.out.println("FuncDef: " + it.type);
+		System.out.println("FuncDef: " + it.type.type);
 		nowScope = new Scope(nowScope);
 		
 		if(it.paralist != null) {
@@ -81,9 +81,12 @@ public class SemanticChecker implements ASTVisitor {
 		nowScope = new Scope(nowScope);
 
 		System.out.println("ClassDef: " + it.id);
+		System.out.println(globalScope.typeMap);
 		nowClass = globalScope.typeMap.get(it.id);
 		System.out.println(nowClass.varMap);
 		System.out.println(nowClass.funcMap);
+		if(nowClass.varMap.containsKey("foo"))
+			System.out.println(nowClass.varMap.get("foo").type);
 		System.out.println(nowClass.type);
 		nowClass.varMap.forEach((x, y) -> nowScope.NewVar(x, y, it.pos));
 		nowClass.funcMap.forEach((x, y) -> nowScope.NewFunc(x, y, it.pos));
@@ -282,8 +285,10 @@ public class SemanticChecker implements ASTVisitor {
 	@Override
 	public void Visit(IdExprNode it) {
 		System.out.println("IdExpr: " + it.id);
+		System.out.println("Scope: " + nowScope);
 		it.type = nowScope.VarGet(it.id, true, it.pos);
 		System.out.println(it.type.type + " " + it.type.dim);
+		System.out.println(it.type.funcMap + " " + it.type.varMap);
 	}
 
 	@Override
@@ -331,7 +336,7 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(FuncExprNode it) {
 		System.out.println("FuncExprNode: " + it.id + " " + it.id.pos + " " + it.id.type + " " + (it.id instanceof IdExprNode));
 		if(it.id instanceof IdExprNode) {
-			System.out.println("ExprHere.");
+			System.out.println("ExprHere. " + ((IdExprNode)it.id).id);
 			it.id.type = nowScope.FuncGet(((IdExprNode)it.id).id, true, it.pos);
 		}
 		else {
@@ -396,7 +401,11 @@ public class SemanticChecker implements ASTVisitor {
 	public void Visit(ClassExprNode it) {
 		it.name.Accept(this);
 		System.out.println("ClassExpr: " + it.name.type.identifier + " " + it.pos + " " + it.isFunc + " " + it.name.type.type);
-		System.out.println(globalScope.typeMap);
+		if(it.name.type.type == Type.basicType.Function)
+			System.out.println("ReturnType: " + it.name.type.functionReturnType.type);
+		else
+			System.out.println("Class Map: " + it.name.type.funcMap + " " + it.name.type.varMap);
+		// System.out.println(globalScope.typeMap);
 		// System.out.println(nowScope.typeMap.get(it.name.type.identifier).identifier);
 		// System.out.println(nowScope.typeMap.get(it.name.type.identifier).type);
 
@@ -435,7 +444,7 @@ public class SemanticChecker implements ASTVisitor {
 			throw new semanticError("Class Undefined", it.pos);
 		}
 		
-		Type preClass = it.name.type;
+		Type preClass = it.name.type.type == Type.basicType.Function ? it.name.type.functionReturnType : it.name.type;
 		System.out.println(it.name.type.identifier);
 		System.out.println(it.name.type.type);
 		System.out.println(it.name.type.dim);
@@ -445,6 +454,7 @@ public class SemanticChecker implements ASTVisitor {
 		System.out.println(it.id);
 		System.out.println(it.isFunc);
 		System.out.println(preClass.funcMap);
+		System.out.println(preClass.varMap);
 		if(it.isFunc) {
 			if(!preClass.funcMap.containsKey(it.id)) {
 				throw new semanticError("Undefined function in Class", it.pos);
@@ -513,6 +523,7 @@ public class SemanticChecker implements ASTVisitor {
 
 	@Override
 	public void Visit(NewExprNode it) {
+		System.out.println("NewExpr: " + it.typeNode.type);
 		if(it.exprList != null) {
 			it.exprList.forEach(x -> {
 				x.Accept(this);
@@ -603,6 +614,7 @@ public class SemanticChecker implements ASTVisitor {
 				break;
 			}
 			case "=": {
+				System.out.println("Operator =: ");
 				System.out.println(it.expr1.type.type + " " + it.expr1.type.dim);
 				System.out.println(it.expr2.type.type);
 				if(!it.expr1.type.TypeEqual(it.expr2.type)) {

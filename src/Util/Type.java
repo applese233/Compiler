@@ -156,9 +156,9 @@ public class Type {
 				return true;
 			if(type == basicType.Class && _type.type == basicType.Class && dim == _type.dim)
 				return true;
-			if(dim >= 0 && _type.type == basicType.Null)
+			if(dim > 1 && _type.type == basicType.Null)
 				return true;
-			if(dim >= 0 && type == _type.type && dim == _type.dim)
+			if(dim > 1 && type == _type.type && dim == _type.dim)
 				return true;
 			System.out.println("Here." + (type == _type.type) + " " + type + " " + _type.type);
 			if(type == _type.type)

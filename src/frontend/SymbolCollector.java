@@ -83,6 +83,7 @@ public class SymbolCollector implements ASTVisitor {
 		}
 		System.out.println("ClassDef: " + it.id);
 		System.out.println(nowScope.funcMap);
+		System.out.println(nowScope.varMap);
 		System.out.println(it.funclist);
 		res.varMap = nowScope.varMap;
 		res.funcMap = nowScope.funcMap;
