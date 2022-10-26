@@ -1,8 +1,6 @@
 import AST.*;
 import frontend.*;
 import Util.MxLiteErrorListener;
-import Util.error.semanticError;
-import Util.position;
 import Util.Scope;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -11,7 +9,6 @@ import Parser.MxLiteLexer;
 import Parser.MxLiteParser;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
 
 public class Compiler {
 	public static void main(String[] args) throws Exception {

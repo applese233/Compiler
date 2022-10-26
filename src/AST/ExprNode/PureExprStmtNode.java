@@ -2,7 +2,6 @@ package AST.ExprNode;
 
 import AST.*;
 import AST.StmtNode.*;
-import AST.DefNode.*;
 import Util.position;
 
 public class PureExprStmtNode extends StmtNode {

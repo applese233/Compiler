@@ -1,13 +1,11 @@
 package frontend;
 
-import java.util.ArrayList;
 
 import AST.*;
 import AST.DefNode.*;
 import AST.StmtNode.*;
 import AST.ExprNode.*;
 import Util.*;
-import Util.error.semanticError;
 
 public class TypeCollector implements ASTVisitor {
 	public Scope globalScope;

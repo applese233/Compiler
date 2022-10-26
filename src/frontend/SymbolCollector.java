@@ -7,7 +7,6 @@ import AST.DefNode.*;
 import AST.StmtNode.*;
 import AST.ExprNode.*;
 import Util.*;
-import Util.error.semanticError;
 
 public class SymbolCollector implements ASTVisitor {
 	public Scope globalScope, nowScope;

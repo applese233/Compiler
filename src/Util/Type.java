@@ -166,4 +166,10 @@ public class Type {
 			return false;
 		}
 	}
+
+	public boolean Equal(basicType _type) {
+		if(type == basicType.Function)
+			return functionReturnType.type == _type;
+		return type == _type;
+	}
 }
