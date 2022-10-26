@@ -14,9 +14,9 @@ import java.io.InputStream;
 public class Compiler {
 	public static void main(String[] args) throws Exception {
 		String name = "test.mx";
-		// InputStream input = System.in;
+		InputStream input = System.in;
 		System.out.println("Here.");
-		FileInputStream input = new FileInputStream(name);
+		// FileInputStream input = new FileInputStream(name);
 		try {
 			System.out.println("Here2.");
 			ProgNode ASTRoot;
