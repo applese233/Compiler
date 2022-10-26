@@ -49,7 +49,7 @@ public class SemanticChecker implements ASTVisitor {
 
 	@Override
 	public void Visit(FuncDefNode it) {
-		System.out.println("FuncDef: " + it.type.type);
+		// System.out.println("FuncDef: " + it.type.type);
 		nowScope = new Scope(nowScope);
 		
 		if(it.paralist != null) {
@@ -216,7 +216,7 @@ public class SemanticChecker implements ASTVisitor {
 			else {
 				it.expr.Accept(this);
 				System.out.println(returnType.type + " " + it.expr.type.type);
-				if(!it.expr.type.Equal(returnType.type)) {
+				if(!returnType.TypeEqual(it.expr.type)) {
 					throw new semanticError("Return Type not Equal", it.pos);
 				}
 			}
@@ -363,7 +363,7 @@ public class SemanticChecker implements ASTVisitor {
 			System.out.println(it.exprList.exprList.get(i).type.type);
 			System.out.println(it.exprList.exprList.get(i).type.identifier);
 			System.out.println(tmp.functionParameters.get(i).type);
-			if(!it.exprList.exprList.get(i).type.TypeEqual(tmp.functionParameters.get(i))) {
+			if(!tmp.functionParameters.get(i).TypeEqual(it.exprList.exprList.get(i).type)) {
 				throw new semanticError("Type of parameters in function not match", it.pos);
 			}
 		}
@@ -381,17 +381,18 @@ public class SemanticChecker implements ASTVisitor {
 		System.out.println(it.bas.type.type + " " + it.bas.type.dim + " " + it.bas.pos);
 		System.out.println(it.off.type.type + " " + it.off.type.dim + " " + it.off.pos);
 
-		if(it.bas.type.dim < 0) {
+		Type tmp = it.bas.type.type == Type.basicType.Function ? it.bas.type.functionReturnType : it.bas.type;
+
+		if(tmp.dim <= 0) {
 			throw new semanticError("Undefined Array", it.pos);
 		}
 
-		if(!it.off.type.Equal(Type.basicType.Int)) {
+		if(!it.off.type.Equal(Type.basicType.Int) || it.off.type.dim > 0) {
 			throw new semanticError("Invalid offset", it.pos);
 		}
 
-		Type tmp = it.bas.type;
 		System.out.println("Now: " + tmp.dim + " " + it.type);
-		if(tmp.dim == 1)
+		if(tmp.dim == 0)
 			it.type = tmp;
 		else
 			it.type = new Type(tmp, tmp.dim - 1);
@@ -545,7 +546,9 @@ public class SemanticChecker implements ASTVisitor {
 		it.expr2.Accept(this);
 
 		if(it.expr1.type.type == Type.basicType.Null) {
-			throw new semanticError("Binary Expression Expr1's Type Error", it.pos);
+			if(!it.op.equals("==") || it.expr2.type.type != Type.basicType.Null) {
+				throw new semanticError("Binary Expression Expr1's Type Error", it.pos);
+			}
 		}
 
 		switch(it.op) {

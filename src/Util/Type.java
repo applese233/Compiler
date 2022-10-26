@@ -152,14 +152,10 @@ public class Type {
 			return TypeEqual(_type.functionReturnType);
 		else {
 			System.out.println("What?");
-			if(type == basicType.Class && _type.type == basicType.Null)
-				return true;
-			if(type == basicType.Class && _type.type == basicType.Class && dim == _type.dim)
-				return true;
-			if(dim > 1 && _type.type == basicType.Null)
-				return true;
-			if(dim > 1 && type == _type.type && dim == _type.dim)
-				return true;
+			if(type == basicType.Class)
+				return (_type.type == basicType.Null) || (_type.type == basicType.Class && dim == _type.dim);
+			if(dim > 0)
+				return (_type.type == basicType.Null) || (type == _type.type && dim == _type.dim);
 			System.out.println("Here." + (type == _type.type) + " " + type + " " + _type.type);
 			if(type == _type.type)
 				return true;
