@@ -16,9 +16,12 @@ import IR.type.ClassType;
 import IR.type.IRType;
 import IR.type.VoidType;
 import Util.Scope;
+import Util.Type;
 import AST.*;
+import AST.DefNode.ClassDefNode;
+import AST.DefNode.FuncDefNode;
 
-public class IRBuilder implements IRVisitor {
+public class IRBuilder implements ASTVisitor {
 	public IR.Module module;
 	public Function nowFunction, initFunction;
 	public BasicBlock nowBlock, globalEndBlock, globalIncrBlock, initBlock;
@@ -44,5 +47,35 @@ public class IRBuilder implements IRVisitor {
 		structFunction = false;
 	}
 
+	@Override
+	public void Visit(ProgNode it) {
+		classCollector = true;
+		for(ASTNode x : it.list)
+			if(x instanceof ClassDefNode)
+				x.Accept(this);
+		classCollector = false;
 
+		Global = true;
+		it.list.forEach(x -> x.Accept(this));
+		initBlock.AddInst(new Ret(initBlock));
+		initFunction.blockList.add(initBlock);
+		module.funcList.add(initFunction);
+	}
+
+	@Override
+	public void Visit(TypeNode it) {
+
+	}
+
+	@Override
+	public void Visit(FuncDefNode it) {
+		Type nowType;
+		IRType nowIRType;
+		if(structFunction) {
+			nowIRType = new VoidType();
+		}
+		else {
+			nowType = globalScope.TypeGet(it.type, null);
+		}
+	}
 }
