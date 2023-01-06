@@ -8,18 +8,23 @@ import IR.Function;
 import IR.IRScope;
 import IR.IRVisitor;
 import IR.Module;
+import IR.inst.Alloca;
+import IR.inst.Call;
 import IR.inst.Define;
 import IR.inst.Ret;
+import IR.inst.Store;
 import IR.operand.GlobalVariable;
 import IR.operand.Register;
 import IR.type.ClassType;
 import IR.type.IRType;
+import IR.type.PointerType;
 import IR.type.VoidType;
 import Util.Scope;
 import Util.Type;
 import AST.*;
 import AST.DefNode.ClassDefNode;
 import AST.DefNode.FuncDefNode;
+import AST.StmtNode.VarDecStmtNode;
 
 public class IRBuilder implements ASTVisitor {
 	public IR.Module module;
@@ -76,6 +81,68 @@ public class IRBuilder implements ASTVisitor {
 		}
 		else {
 			nowType = globalScope.TypeGet(it.type, null);
+			nowIRType = nowType.GetIRType();
+			if(nowIRType instanceof ClassType) {
+				nowIRType = new PointerType(nowIRType);
+			}
+			for(int i = 1; i <= it.type.dim; ++ i) {
+				nowIRType = new PointerType(nowIRType);
+			}
+		}
+		retType = nowIRType;
+
+		nowIRScope = new IRScope(nowIRScope);
+		num = numLabel = -1;
+
+		nowFunction = new Function();
+		numLabel ++;
+		nowBlock = new BasicBlock("L" + numLabel, nowFunction);
+		if(it.id.equals("main")) {
+			nowBlock.AddInst(new Call(nowBlock, null, new VoidType(), "_INIT_", new ArrayList<>()));
+		}
+
+		String funcId;
+		if(nowClass == null) {
+			funcId = it.id;
+		}
+		else {
+			funcId = nowClass.name + "_" + it.id;
+		}
+		Define nowDef = new Define(nowIRType, funcId);
+		if(nowClass != null) {
+			nowDef.typeList.add(new PointerType(nowClass));
+			num ++;
+			Register tmpReg = new Register(new PointerType(nowClass), Integer.toString(num));
+			nowDef.regList.add(tmpReg);
+		}
+		if(it.paralist != null) {
+			for(VarDecStmtNode x : it.paralist) {
+				Type tmpType = globalScope.TypeGet(x.type, null);
+				IRType tmpIRType = tmpType.GetIRType();
+				if(tmpIRType instanceof ClassType) {
+					tmpIRType = new PointerType(tmpIRType);
+				}
+				for(int i = 1; i <= x.type.dim; ++ i) {
+					tmpIRType = new PointerType(tmpIRType);
+				}
+				nowDef.typeList.add(tmpIRType);
+				num ++;
+				Register tmpReg = new Register(tmpIRType, Integer.toString(num));
+				nowDef.regList.add(tmpReg);
+			}
+		}
+		nowFunction.funcDefine = nowDef;
+
+		if(nowClass != null) {
+			IRType tmpIRType = new PointerType(nowClass);
+			num ++;
+			Register tmpReg = new Register(tmpIRType, Integer.toString(num));
+			nowBlock.AddInst(new Alloca(nowBlock, tmpReg, tmpIRType));
+			nowBlock.AddInst(new Store(nowBlock, tmpIRType, new Register(tmpIRType, "0"), tmpReg));
+			nowClassPointer = tmpReg;
+		}
+		if(it.paralist != null) {
+			
 		}
 	}
 }

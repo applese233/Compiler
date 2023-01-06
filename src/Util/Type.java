@@ -3,6 +3,11 @@ package Util;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import IR.type.IRType;
+import IR.type.IntType;
+import IR.type.PointerType;
+import IR.type.VoidType;
+
 public class Type {
 	public enum basicType {
 		Int, Bool, String, Void, Class, Function, This, Null
@@ -16,6 +21,7 @@ public class Type {
 	public HashMap<String, Type> varMap;
 	public HashMap<String, Type> funcMap;
 	public Type struct = null;
+	public IRType irType = null;
 
 	public Type(String _identifier) {
 		identifier = _identifier;
@@ -167,5 +173,31 @@ public class Type {
 		if(type == basicType.Function)
 			return functionReturnType.type == _type;
 		return type == _type;
+	}
+
+	public IRType GetIRType() {
+		if(type == basicType.Int)
+			return new IntType(32);
+		else if(type == basicType.Bool)
+			return new IntType(1);
+		else if(type == basicType.String)
+			return new PointerType(new IntType(8));
+		else if(type == basicType.Void)
+			return new VoidType();
+		else if(type == basicType.Function)
+			return functionReturnType.GetIRType();
+		else {
+			if(dim > 0) {
+				if(type == basicType.Int)
+					return new IntType(32);
+				else if(type == basicType.Bool)
+					return new IntType(1);
+				else if(type == basicType.String)
+					return new PointerType(new IntType(8));
+				else if(type == basicType.Void)
+					return new VoidType();
+			}
+			return irType;
+		}
 	}
 }
