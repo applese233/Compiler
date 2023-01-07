@@ -1,12 +1,14 @@
 package AST.ExprNode;
 
 import AST.*;
+import IR.operand.Operand;
 import Util.position;
 import Util.Type;
 
 public abstract class ExprNode extends ASTNode {
 	public Type type;
 	public boolean assign = false;
+	public Operand operand;
 
 	public ExprNode(position _pos) {
 		super(_pos);
