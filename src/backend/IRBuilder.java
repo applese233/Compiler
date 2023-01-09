@@ -3,62 +3,17 @@ package backend;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import IR.BasicBlock;
-import IR.Function;
-import IR.IRScope;
-import IR.IRVisitor;
-import IR.Module;
-import IR.inst.Alloca;
-import IR.inst.Bitcast;
-import IR.inst.Br;
-import IR.inst.Call;
-import IR.inst.Define;
-import IR.inst.Getelementptr;
-import IR.inst.Global;
-import IR.inst.Load;
-import IR.inst.Ret;
-import IR.inst.Store;
-import IR.operand.BoolConst;
-import IR.operand.GlobalVariable;
-import IR.operand.IntConst;
-import IR.operand.NullOperand;
-import IR.operand.Operand;
-import IR.operand.Register;
-import IR.operand.StringConst;
-import IR.type.ClassType;
-import IR.type.IRType;
-import IR.type.IntType;
-import IR.type.PointerType;
-import IR.type.VoidType;
-import IR.type.ArrayType;
+import IR.*;
+import IR.inst.*;
+import IR.operand.*;
+import IR.type.*;
 import Util.Scope;
 import Util.Type;
 import Util.Type.basicType;
 import AST.*;
-import AST.DefNode.ClassDefNode;
-import AST.DefNode.FuncDefNode;
-import AST.ExprNode.BoolExprNode;
-import AST.ExprNode.ClassExprNode;
-import AST.ExprNode.ExprNode;
-import AST.ExprNode.FuncExprNode;
-import AST.ExprNode.IdExprNode;
-import AST.ExprNode.IndexExprNode;
-import AST.ExprNode.IntExprNode;
-import AST.ExprNode.LambdaExprNode;
-import AST.ExprNode.NullExprNode;
-import AST.ExprNode.PureExprStmtNode;
-import AST.ExprNode.StringExprNode;
-import AST.ExprNode.ThisExprNode;
-import AST.StmtNode.BreakStmtNode;
-import AST.StmtNode.ContinueStmtNode;
-import AST.StmtNode.EmptyStmtNode;
-import AST.StmtNode.ForStmtNode;
-import AST.StmtNode.IfStmtNode;
-import AST.StmtNode.ReturnStmtNode;
-import AST.StmtNode.SuiteStmtNode;
-import AST.StmtNode.VarDecStmtNode;
-import AST.StmtNode.VarDefStmtNode;
-import AST.StmtNode.WhileStmtNode;
+import AST.DefNode.*;
+import AST.ExprNode.*;
+import AST.StmtNode.*;
 
 public class IRBuilder implements ASTVisitor {
 	public IR.Module module;
@@ -773,6 +728,184 @@ public class IRBuilder implements ASTVisitor {
 
 	@Override
 	public void Visit(IndexExprNode it) {
+		ArrayList<Operand> nowparaList = new ArrayList<>();
+		it.bas.Accept(this);
+		it.off.Accept(this);
 
+		Operand offReg;
+		IRType offIRType = it.off.operand.type;
+		if(it.off.operand.loadneed) {
+			IRType newIRType = ((PointerType) offIRType).type;
+			num ++;
+			offReg = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) offReg, newIRType, it.off.operand));
+		}
+		else {
+			offReg = it.off.operand;
+		}
+
+		nowparaList.add(offReg);
+
+		Operand basReg;
+		IRType basIRType = it.bas.operand.type, nowIRType = basIRType;
+		if(it.bas.operand.loadneed) {
+			IRType newIRType = ((PointerType) basIRType).type;
+			nowIRType = newIRType;
+			num ++;
+			basReg = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) basReg, newIRType, it.bas.operand));
+		}
+		else {
+			basReg = it.bas.operand;
+		}
+
+		num ++;
+		Register nowReg = new Register(nowIRType, Integer.toString(num));
+		nowBlock.AddInst(new Getelementptr(nowBlock, nowReg, (PointerType)nowIRType, basReg, nowparaList));
+
+		it.operand = nowReg;
+		it.operand.loadneed = true;
+	}
+
+	@Override
+	public void Visit(ClassExprNode it) {
+		it.name.Accept(this);
+
+		IRType classPointerType;
+		IRType nameIRType = it.name.operand.type;
+		classPointerType = nameIRType;
+		Operand classReg;
+		if(it.name.operand.loadneed) {
+			IRType newIRType = ((PointerType) nameIRType).type;
+			classPointerType = newIRType;
+			num ++;
+			classReg = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) classReg, newIRType, it.name.operand));
+		}
+		else {
+			classReg = it.name.operand;
+		}
+		IRType classIRType = ((PointerType) classPointerType).type;
+
+		ArrayList<Operand> nowparaList = new ArrayList<>();
+		nowparaList.add(new IntConst(0));
+		int pos = ((ClassType) classIRType).nameList.indexOf(it.id);
+		IRType nowIRType = ((ClassType) classIRType).typeList.get(pos);
+		nowparaList.add(new IntConst(pos));
+		num ++;
+		Register nowReg = new Register(new PointerType(nowIRType), Integer.toString(num));
+		nowBlock.AddInst(new Getelementptr(nowBlock, nowReg, (PointerType) classPointerType, classReg, nowparaList));
+
+		it.operand = nowReg;
+		it.operand.loadneed = true;
+	}
+
+	@Override
+	public void Visit(SufExprNode it) {
+		it.expr.Accept(this);
+		IRType nowIRType;
+
+		Operand beforeReg;
+		IRType beforeIRType = it.expr.operand.type;
+		nowIRType = beforeIRType;
+		if(it.expr.operand.loadneed) {
+			IRType newIRType = ((PointerType) beforeIRType).type;
+			nowIRType = newIRType;
+			num ++;
+			beforeReg = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) beforeReg, newIRType, it.expr.operand));
+		}
+		else {
+			beforeReg = it.expr.operand;
+		}
+		num ++;
+		Register afterReg = new Register(nowIRType, Integer.toString(num));
+		if(it.op.equals("++")) {
+			nowBlock.AddInst(new Binary(nowBlock, afterReg, "add", nowIRType, beforeReg, new IntConst(1)));
+		}
+		else if(it.op.equals("--")) {
+			nowBlock.AddInst(new Binary(nowBlock, afterReg, "add", nowIRType, beforeReg, new IntConst(-1)));
+		}
+		nowBlock.AddInst(new Store(nowBlock, nowIRType, afterReg, it.expr.operand));
+		it.operand = beforeReg;
+	}
+
+	@Override
+	public void Visit(PreExprNode it) {
+		it.expr.Accept(this);
+		IRType nowIRType;
+
+		Operand beforeReg;
+		IRType beforeIRType = it.expr.operand.type;
+		nowIRType = beforeIRType;
+		if(it.expr.operand.loadneed) {
+			IRType newIRType = ((PointerType) beforeIRType).type;
+			nowIRType = newIRType;
+			num ++;
+			beforeReg = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) beforeReg, newIRType, it.expr.operand));
+		}
+		else {
+			beforeReg = it.expr.operand;
+		}
+
+		switch(it.op) {
+			case "++": {
+				num ++;
+				Register afterReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, afterReg, "add", nowIRType, beforeReg, new IntConst(1)));
+				nowBlock.AddInst(new Store(nowBlock, nowIRType, afterReg, it.expr.operand));
+				it.operand = afterReg;
+				break;
+			}
+			case "--": {
+				num ++;
+				Register afterReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, afterReg, "add", nowIRType, beforeReg, new IntConst(-1)));
+				nowBlock.AddInst(new Store(nowBlock, nowIRType, afterReg, it.expr.operand));
+				it.operand = afterReg;
+				break;
+			}
+			case "+": {
+				it.operand = beforeReg;
+				break;
+			}
+			case "-": {
+				num ++;
+				Register afterReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, afterReg, "sub", nowIRType, new IntConst(0), beforeReg));
+				it.operand = afterReg;
+				break;
+			}
+			case "!": {
+				num ++;
+				Register afterReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, afterReg, "xor", nowIRType, beforeReg, new BoolConst(true)));
+				it.operand = afterReg;
+				break;
+			}
+			case "~": {
+				num ++;
+				Register afterReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, afterReg, "xor", nowIRType, beforeReg, new IntConst(-1)));
+				it.operand = afterReg;
+				break;
+			}
+		}
+	}
+
+	@Override
+	public void Visit(NewExprNode it) {
+
+	}
+
+	@Override
+	public void Visit(BinaryExprNode it) {
+		
+	}
+
+	@Override
+	public void Visit(ExprListNode it) {
+		it.exprList.forEach(x -> x.Accept(this));
 	}
 }
