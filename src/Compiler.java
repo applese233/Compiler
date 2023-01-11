@@ -1,7 +1,10 @@
 import AST.*;
 import frontend.*;
+import backend.*;
 import Util.MxLiteErrorListener;
 import Util.Scope;
+import IR.*;
+
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -49,6 +52,12 @@ public class Compiler {
 			System.out.println("Checker End.");
 
 			return;
+
+			IR.Module module = new Module();
+			new IRBuilder(globalScope, module).Visit(ASTRoot);
+			IRPrinter irPrinter = new IRPrinter("myllvm.ll");
+			irPrinter.Visit(module);
+
 		}
 		catch (Error error) {
 			System.err.println(error.toString());

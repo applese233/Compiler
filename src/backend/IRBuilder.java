@@ -969,7 +969,7 @@ public class IRBuilder implements ASTVisitor {
 		PointerType sizePointerIRType = new PointerType(new IntType(32));
 		num ++;
 		Register sizePointerReg = new Register(sizePointerIRType, Integer.toString(num));
-		nowBlock.AddInst(new Bitcast(nowBlock, sizePointerReg, new PointerType(new IntType(8)), callReg, sizePointerIRType))
+		nowBlock.AddInst(new Bitcast(nowBlock, sizePointerReg, new PointerType(new IntType(8)), callReg, sizePointerIRType));
 
 		nowBlock.AddInst(new Store(nowBlock, new IntType(32), sizeReg, sizePointerReg));
 
@@ -1022,14 +1022,527 @@ public class IRBuilder implements ASTVisitor {
 				nowBlock.AddInst(new Br(nowBlock, condReg, bodyBlock, endBlock));
 				nowFunction.blockList.add(nowBlock);
 
+				nowBlock = bodyBlock;
+				x = it.exprList.get(i);
+				x.Accept(this);
+				if(x.operand.loadneed) {
+					num ++;
+					sizeReg = new Register(new IntType(32), Integer.toString(num));
+					nowBlock.AddInst(new Load(nowBlock, (Register) sizeReg, new IntType(32), x.operand));
+				}
+				else {
+					sizeReg = x.operand;
+				}
+
+				num ++;
+				mulReg = new Register(new IntType(32), Integer.toString(num));
+				singleSize = 4;
+				nowBlock.AddInst(new Binary(nowBlock, mulReg, "mul", new IntType(32), sizeReg, new IntConst(singleSize)));
 				
+				num ++;
+				sumReg = new Register(new IntType(32), Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, sumReg, "add", new IntType(32), mulReg, new IntConst(4)));
+
+				num ++;
+				callReg = new Register(new PointerType(new IntType(8)), Integer.toString(num));
+				nowparaList = new ArrayList<>();
+				nowparaList.add(sumReg);
+				nowBlock.AddInst(new Call(nowBlock, callReg, new PointerType(new IntType(8)), "_f_malloc", nowparaList));
+
+				sizePointerIRType = new PointerType(new IntType(32));
+				num ++;
+				sizePointerReg = new Register(sizePointerIRType, Integer.toString(num));
+				nowBlock.AddInst(new Bitcast(nowBlock, sizePointerReg, new PointerType(new IntType(8)), callReg, sizePointerIRType));
+
+				nowBlock.AddInst(new Store(nowBlock, new IntType(32), sizeReg, sizePointerReg));
+
+				num ++;
+				moveReg = new Register(sizePointerIRType, Integer.toString(num));
+				nowparaList = new ArrayList<>();
+				nowparaList.add(new IntConst(1));
+				nowBlock.AddInst(new Getelementptr(nowBlock, moveReg, sizePointerIRType, sizePointerReg, nowparaList));
+
+				trueIRType = nowIRType;
+				for(int j = 0; j < dim - i; ++ j) {
+					trueIRType = new PointerType(trueIRType);
+				}
+				num ++;
+				finalReg = new Register(trueIRType, Integer.toString(num));
+				nowBlock.AddInst(new Bitcast(nowBlock, finalReg, sizePointerIRType, moveReg, trueIRType));
+
+				num ++;
+				addrReg = new Register(preReg.type, Integer.toString(num));
+				nowparaList = new ArrayList<>();
+				nowparaList.add(curReg);
+				nowBlock.AddInst(new Getelementptr(nowBlock, addrReg, (PointerType) preReg.type, preReg, nowparaList));
+				nowBlock.AddInst(new Store(nowBlock, trueIRType, finalReg, addrReg));
+
+				nowBlock.AddInst(new Br(nowBlock, incrBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				nowBlock = incrBlock;
+				++ num;
+				newIncrReg = new Register(new IntType(32), Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newIncrReg, "add", new IntType(32), curReg, new IntConst(1)));
+				nowBlock.AddInst(new Store(nowBlock, new IntType(32), newIncrReg, incrReg));
+				nowBlock.AddInst(new Br(nowBlock, condBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				nowBlock = endBlock;
 			}
 		}
 	}
 
 	@Override
 	public void Visit(BinaryExprNode it) {
-		
+		if(it.op.equals("||") || it.op.equals("&&")) {
+			it.expr1.Accept(this);
+			IRType nowIRType;
+
+			Operand operand1;
+			IRType expr1IRType = it.expr1.operand.type;
+			nowIRType = expr1IRType;
+			if(it.expr1.operand.loadneed) {
+				IRType newIRType = ((PointerType) expr1IRType).type;
+				nowIRType = newIRType;
+				num ++;
+				operand1 = new Register(newIRType, Integer.toString(num));
+				nowBlock.AddInst(new Load(nowBlock, (Register) operand1, newIRType, it.expr1.operand));
+			}
+			else {
+				operand1 = it.expr1.operand;
+			}
+
+			numLabel ++;
+			BasicBlock endBlock = new BasicBlock("L" + numLabel, nowFunction);
+			numLabel ++;
+			BasicBlock shortBlock = new BasicBlock("L" + numLabel, nowFunction);
+			numLabel ++;
+			BasicBlock longBlock = new BasicBlock("L" + numLabel, nowFunction);
+
+			if(it.op.equals("||")) {
+				num ++;
+				Register ctrl = new Register(new PointerType(nowIRType), Integer.toString(num));
+				nowBlock.AddInst(new Alloca(nowBlock, ctrl, nowIRType));
+				nowBlock.AddInst(new Br(nowBlock, operand1, shortBlock, longBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				BasicBlock tmpEndBlock = globalEndBlock;
+				globalEndBlock = endBlock;
+
+				nowBlock = shortBlock;
+				nowBlock.AddInst(new Store(nowBlock, nowIRType, new BoolConst(true), ctrl));
+				nowBlock.AddInst(new Br(nowBlock, endBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				nowBlock = longBlock;
+				it.expr2.Accept(this);
+				
+				Operand operand2;
+				IRType expr2IRType = it.expr2.operand.type;
+				if(it.expr2.operand.loadneed) {
+					IRType newIRType = ((PointerType) expr2IRType).type;
+					num ++;
+					operand2 = new Register(newIRType, Integer.toString(num));
+					nowBlock.AddInst(new Load(nowBlock, (Register) operand2, newIRType, it.expr2.operand));
+				}
+				else {
+					operand2 = it.expr2.operand;
+				}
+				nowBlock.AddInst(new Store(nowBlock, nowIRType, operand2, ctrl));
+				nowBlock.AddInst(new Br(nowBlock, endBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				nowBlock = endBlock;
+				it.operand = ctrl;
+				it.operand.loadneed = true;
+
+				globalEndBlock = tmpEndBlock;
+			}
+			else {
+				num ++;
+				Register ctrl = new Register(new PointerType(nowIRType), Integer.toString(num));
+				nowBlock.AddInst(new Alloca(nowBlock, ctrl, nowIRType));
+				nowBlock.AddInst(new Br(nowBlock, operand1, longBlock, shortBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				BasicBlock tmpEndBlock = globalEndBlock;
+				globalEndBlock = endBlock;
+
+				nowBlock = shortBlock;
+				nowBlock.AddInst(new Store(nowBlock, nowIRType, new BoolConst(false), ctrl));
+				nowBlock.AddInst(new Br(nowBlock, endBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				nowBlock = longBlock;
+				it.expr2.Accept(this);
+				
+				Operand operand2;
+				if(it.expr2.operand.loadneed) {
+					num ++;
+					operand2 = new Register(nowIRType, Integer.toString(num));
+					nowBlock.AddInst(new Load(nowBlock, (Register) operand2, nowIRType, it.expr2.operand));
+				}
+				else {
+					operand2 = it.expr2.operand;
+				}
+				nowBlock.AddInst(new Store(nowBlock, nowIRType, operand2, ctrl));
+				nowBlock.AddInst(new Br(nowBlock, endBlock));
+				nowFunction.blockList.add(nowBlock);
+
+				nowBlock = endBlock;
+				it.operand = ctrl;
+				it.operand.loadneed = true;
+
+				globalEndBlock = tmpEndBlock;
+			}
+			return;
+		}
+
+		if(it.op.equals("=")) {
+			it.expr1.Accept(this);
+			it.expr2.Accept(this);
+
+			Operand operand2;
+			IRType expr2IRType = it.expr2.operand.type;
+			if(it.expr2.operand.loadneed) {
+				IRType newIRType = ((PointerType) expr2IRType).type;
+				num ++;
+				operand2 = new Register(newIRType, Integer.toString(num));
+				nowBlock.AddInst(new Load(nowBlock, (Register) operand2, newIRType, it.expr2.operand));
+			}
+			else {
+				operand2 = it.expr2.operand;
+			}
+
+			nowBlock.AddInst(new Store(nowBlock, ((PointerType) it.expr1.operand.type).type, operand2, it.expr1.operand));
+			it.operand = it.expr1.operand;
+			return;
+		}
+
+		it.expr1.Accept(this);
+		it.expr2.Accept(this);
+
+		IRType nowIRType = it.type.GetIRType();
+
+		Operand operand1;
+		IRType expr1IRType = it.expr1.operand.type;
+		if(it.expr1.operand.loadneed) {
+			IRType newIRType = ((PointerType) expr1IRType).type;
+			num ++;
+			operand1 = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) operand1, newIRType, it.expr1.operand));
+		}
+		else {
+			operand1 = it.expr1.operand;
+		}
+		Operand operand2;
+		IRType expr2IRType = it.expr2.operand.type;
+		if(it.expr2.operand.loadneed) {
+			IRType newIRType = ((PointerType) expr2IRType).type;
+			num ++;
+			operand2 = new Register(newIRType, Integer.toString(num));
+			nowBlock.AddInst(new Load(nowBlock, (Register) operand2, newIRType, it.expr2.operand));
+		}
+		else {
+			operand2 = it.expr2.operand;
+		}
+
+		if(operand1 instanceof IntConst && operand2 instanceof IntConst) {
+			switch(it.op) {
+				case "+": {
+					it.operand = new IntConst(((IntConst) operand1).val + ((IntConst) operand2).val);
+					break;
+				}
+				case "-": {
+					it.operand = new IntConst(((IntConst) operand1).val - ((IntConst) operand2).val);
+					break;
+				}
+				case "*": {
+					it.operand = new IntConst(((IntConst) operand1).val * ((IntConst) operand2).val);
+					break;
+				}
+				case "/": {
+					it.operand = new IntConst(((IntConst) operand1).val / ((IntConst) operand2).val);
+					break;
+				}
+				case "%": {
+					it.operand = new IntConst(((IntConst) operand1).val % ((IntConst) operand2).val);
+					break;
+				}
+				case "<<": {
+					it.operand = new IntConst(((IntConst) operand1).val << ((IntConst) operand2).val);
+					break;
+				}
+				case ">>": {
+					it.operand = new IntConst(((IntConst) operand1).val >> ((IntConst) operand2).val);
+					break;
+				}
+				case "<": {
+					it.operand = new BoolConst(((IntConst) operand1).val < ((IntConst) operand2).val);
+					break;
+				}
+				case "<=": {
+					it.operand = new BoolConst(((IntConst) operand1).val <= ((IntConst) operand2).val);
+					break;
+				}
+				case ">": {
+					it.operand = new BoolConst(((IntConst) operand1).val > ((IntConst) operand2).val);
+					break;
+				}
+				case ">=": {
+					it.operand = new BoolConst(((IntConst) operand1).val >= ((IntConst) operand2).val);
+					break;
+				}
+				case "!=": {
+					it.operand = new BoolConst(((IntConst) operand1).val != ((IntConst) operand2).val);
+					break;
+				}
+				case "==": {
+					it.operand = new BoolConst(((IntConst) operand1).val == ((IntConst) operand2).val);
+					break;
+				}
+				case "^": {
+					it.operand = new IntConst(((IntConst) operand1).val ^ ((IntConst) operand2).val);
+					break;
+				}
+				case "|": {
+					it.operand = new IntConst(((IntConst) operand1).val | ((IntConst) operand2).val);
+					break;
+				}
+				case "&": {
+					it.operand = new IntConst(((IntConst) operand1).val & ((IntConst) operand2).val);
+					break;
+				}
+			}
+			return;
+		}
+		else if(operand1 instanceof BoolConst && operand2 instanceof BoolConst) {
+			switch(it.op) {
+				case "||": {
+					it.operand = new BoolConst(((BoolConst) operand1).val || ((BoolConst) operand2).val);
+					break;
+				}
+				case "&&": {
+					it.operand = new BoolConst(((BoolConst) operand1).val && ((BoolConst) operand2).val);
+					break;
+				}
+			}
+			return;
+		}
+
+		if(it.expr1.type.type == basicType.String) {
+			switch(it.op) {
+				case "+": {
+					num ++;
+					Register newReg = new Register(nowIRType, Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, nowIRType, "_str_concatenate", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+				case "<": {
+					num ++;
+					Register newReg = new Register(new IntType(1), Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, new IntType(1), "_str_lt", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+				case "<=": {
+					num ++;
+					Register newReg = new Register(new IntType(1), Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, new IntType(1), "_str_le", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+				case ">": {
+					num ++;
+					Register newReg = new Register(new IntType(1), Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, new IntType(1), "_str_gt", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+				case ">=": {
+					num ++;
+					Register newReg = new Register(new IntType(1), Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, new IntType(1), "_str_ge", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+				case "==": {
+					num ++;
+					Register newReg = new Register(new IntType(1), Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, new IntType(1), "_str_eq", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+				case "!=": {
+					num ++;
+					Register newReg = new Register(new IntType(1), Integer.toString(num));
+					ArrayList<Operand> nowparaList = new ArrayList<>();
+					nowparaList.add(operand1);
+					nowparaList.add(operand2);
+					nowBlock.AddInst(new Call(nowBlock, newReg, new IntType(1), "_str_ne", nowparaList));
+
+					it.operand = newReg;
+					break;
+				}
+			}
+		}
+
+		switch(it.op) {
+			case "+": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "add", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "-": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "sub", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "*": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "mul", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "/": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "sdiv", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "%": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "srem", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "<<": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "shl", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case ">>": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "ashr", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "<": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Icmp(nowBlock, newReg, "slt", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "<=": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Icmp(nowBlock, newReg, "sle", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case ">": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Icmp(nowBlock, newReg, "sgt", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case ">=": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Icmp(nowBlock, newReg, "sge", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "!=": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Icmp(nowBlock, newReg, "ne", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "==": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Icmp(nowBlock, newReg, "eq", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "^": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "xor", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "|": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "or", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+			case "&": {
+				num ++;
+				Register newReg = new Register(nowIRType, Integer.toString(num));
+				nowBlock.AddInst(new Binary(nowBlock, newReg, "and", operand1.type, operand1, operand2));
+
+				it.operand = newReg;
+				break;
+			}
+		}
 	}
 
 	@Override
