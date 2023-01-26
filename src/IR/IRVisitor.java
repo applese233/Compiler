@@ -3,7 +3,7 @@ package IR;
 import IR.inst.*;
 
 public interface IRVisitor {
-	void Visit(Module it);
+	void Visit(Module_ it);
 
     void Visit(Function it);
 

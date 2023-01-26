@@ -34,7 +34,7 @@ public class IRPrinter implements IRVisitor {
 	}
 
 	@Override
-	public void Visit(IR.Module it) {
+	public void Visit(Module_ it) {
 		it.globalList.forEach(x -> x.Accept(this));
 		file_print.println("");
 		it.funcList.forEach(x -> x.Accept(this));

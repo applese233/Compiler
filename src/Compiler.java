@@ -51,9 +51,9 @@ public class Compiler {
 			new SemanticChecker(globalScope).Visit(ASTRoot);
 			System.out.println("Checker End.");
 
-			return;
+			// return;
 
-			IR.Module module = new Module();
+			Module_ module = new Module_();
 			new IRBuilder(globalScope, module).Visit(ASTRoot);
 			IRPrinter irPrinter = new IRPrinter("myllvm.ll");
 			irPrinter.Visit(module);

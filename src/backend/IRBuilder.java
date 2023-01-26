@@ -16,7 +16,7 @@ import AST.ExprNode.*;
 import AST.StmtNode.*;
 
 public class IRBuilder implements ASTVisitor {
-	public IR.Module module;
+	public IR.Module_ Module_;
 	public Function nowFunction, initFunction;
 	public BasicBlock nowBlock, globalEndBlock, globalIncrBlock, initBlock;
 	public Scope globalScope;
@@ -30,9 +30,9 @@ public class IRBuilder implements ASTVisitor {
 	public int num = 0, numString = 0, numLabel = 0;
 	public boolean Global, classCollector, structFunction;
 
-	public IRBuilder(Scope _globalScope, IR.Module _module) {
+	public IRBuilder(Scope _globalScope, IR.Module_ _Module_) {
 		globalScope = _globalScope;
-		module = _module;
+		Module_ = _Module_;
 		globalMap = new HashMap<>();
 		nowIRScope = new IRScope(null);
 		initFunction = new Function();
@@ -53,7 +53,7 @@ public class IRBuilder implements ASTVisitor {
 		it.list.forEach(x -> x.Accept(this));
 		initBlock.AddInst(new Ret(initBlock));
 		initFunction.blockList.add(initBlock);
-		module.funcList.add(initFunction);
+		Module_.funcList.add(initFunction);
 	}
 
 	@Override
@@ -171,7 +171,7 @@ public class IRBuilder implements ASTVisitor {
 		}
 		nowFunction.blockList.add(nowBlock);
 
-		module.funcList.add(nowFunction);
+		Module_.funcList.add(nowFunction);
 		nowIRScope = nowIRScope.pIRScope;
 	}
 
@@ -195,7 +195,7 @@ public class IRBuilder implements ASTVisitor {
 			if(it.struct != null) {
 				((ClassType) nowIRType).hasStruct = true;
 			}
-			module.globalList.add(new Global(nowIRType));
+			Module_.globalList.add(new Global(nowIRType));
 			return;
 		}
 
@@ -231,10 +231,10 @@ public class IRBuilder implements ASTVisitor {
 
 			GlobalVariable nowVar = new GlobalVariable(it.id, new PointerType(nowIRType));
 			if(nowIRType instanceof PointerType || nowIRType instanceof ArrayType || nowIRType instanceof ClassType) {
-				module.globalList.add(new Global(nowVar, nowIRType, new NullOperand()));
+				Module_.globalList.add(new Global(nowVar, nowIRType, new NullOperand()));
 			}
 			else if(nowIRType instanceof IntType) {
-				module.globalList.add(new Global(nowVar, nowIRType, new IntConst(0)));
+				Module_.globalList.add(new Global(nowVar, nowIRType, new IntConst(0)));
 			}
 			globalMap.put(it.id, nowVar);
 
@@ -529,7 +529,7 @@ public class IRBuilder implements ASTVisitor {
 		res = res.replace("\\", "\\5C").replace("\n", "\\0A").replace("\t", "\\09").replace("\"", "\\22").replace("\0", "\\00");
 		numString ++;
 		GlobalVariable nowVar = new GlobalVariable("str" + numString, globalIRType);
-		module.globalList.add(new Global(nowVar, globalIRType, new StringConst(globalIRType, res)));
+		Module_.globalList.add(new Global(nowVar, globalIRType, new StringConst(globalIRType, res)));
 
 		num ++;
 		Register nowReg = new Register(new PointerType(new IntType(8)), Integer.toString(num));

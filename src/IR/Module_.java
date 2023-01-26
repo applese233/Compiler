@@ -4,11 +4,11 @@ import IR.inst.Global;
 
 import java.util.ArrayList;
 
-public class Module {
+public class Module_ {
 	public ArrayList<Global> globalList;
 	public ArrayList<Function> funcList;
 
-	public Module() {
+	public Module_() {
 		globalList = new ArrayList<>();
 		funcList = new ArrayList<>();
 	}
