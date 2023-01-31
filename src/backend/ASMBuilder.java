@@ -316,8 +316,8 @@ public class ASMBuilder implements IRVisitor {
 			nowBlock.AddInst(new Sw(sp, tmpReg, new Immediate((i - 8) * 4)));
 		}
 		nowFunction.calloff = Math.max(nowFunction.calloff, spilloff);
-		Inst res = new Call(it.funcId);
-		res.def.AddAll(module.caller);
+		ASM.Inst.Inst res = new ASM.Inst.Call(it.funcId);
+		res.def.addAll(module.caller);
 		nowBlock.AddInst(res);
 
 		if(!(it.type instanceof VoidType)) {

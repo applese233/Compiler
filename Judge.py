@@ -1,271 +1,137 @@
-import yaml
-import os
-import json
-import subprocess
+#!python3
 
-configuration = {}
-color_none = "\033[0m"
-color_green = "\033[0;32m"
-color_yellow = "\033[1;33m"
+import os, time
+
+
+"""
+    Modify following configurations to adapt to your environment.
+"""
+test_cases_dir = '../testcases/semantic/'
+# test_cases_dir = '../testcases/codegen/'
+# test_cases_dir = '../testcases/optim/'
+compile_cmd = "bash build.bash"
+execute_cmd = "bash semantic.bash"
+excluded_test_cases = ["foo.mx"]
+ravel_path = "ravel --enable-cache"
+builtin_path = "./builtin/builtin.s"
+halt_on_3_fails = False
+calculate_score = False
+test_codegen = False
+# When test_codegen && use_llvm is true, the output should be a .ll file, and we will use llc to
+# compile it into asm. You can test the correctness of your IR-gen with this.
+use_llvm = False
+llc_cmd = 'llc-10'
+
+
+
 color_red = "\033[0;31m"
-color_blue = "\033[0;34m"
-color_purple = "\033[0;35m"
+color_green = "\033[0;32m"
+color_none = "\033[0m"
+
+def collect_test_cases():
+    test_cases = []
+    for f in os.listdir(test_cases_dir):
+        if os.path.splitext(f)[1] == '.mx':
+            test_cases.append(f)
+    for s in excluded_test_cases:
+        if s in test_cases: test_cases.remove(s)
+    test_cases.sort()
+    return test_cases
 
 
-def buildCompiler():
-    print(' == 1 ==[ ]== Build Your Compiler')
-    buildScriptPath = os.path.join(configuration['path']['compiler'], 'build.bash')
-    process = None
-    try:
-        process = subprocess.Popen(["sh", buildScriptPath], cwd=configuration['path']['compiler'], stdout=subprocess.PIPE, shell=False)
-        process.wait(configuration['buildlimit'])
-        if process.returncode == 0:
-            print('{} == 1 ==[√]== Build successfully.{}'.format(color_green, color_none))
-        else:
-            print('{} == 1 ==[R]== Build failed with exitcode {}.{}'.format(color_purple, process.returncode, color_none))
-            exit(0)
-        pass
-    except subprocess.TimeoutExpired as identifier:
-        print('{} == 1 ==[T]== Build Timeout.{}'.format(color_yellow, color_none))
-        try:
-            process.kill()
-        except Exception as identifier:
-            pass
-        exit(0)
-        pass
-    except Exception as identifier:
-        print('{} == 1 ==[x]== Build failed with runtime error {}.{}'.format(color_red, identifier, color_none))
-        exit(0)
+def parse_test_case(test_case_path):
+    with open(test_case_path, 'r') as f:
+        lines = f.read().split('\n')
+    src_start_idx = lines.index('*/', lines.index('/*')) + 1
+    src_text = '\n'.join(lines[src_start_idx:])
 
+    input_start_idx = lines.index('=== input ===') + 1
+    input_end_idx = lines.index('=== end ===', input_start_idx)
+    input_text = '\n'.join(lines[input_start_idx:input_end_idx])
 
-def runSemantic():
-    judgeList = open(os.path.join(configuration['path']['dataset'], 'sema/judgelist.txt'), 'r', encoding='utf-8').readlines()
-    semaPath = os.path.join(configuration['path']['dataset'], 'sema')
-    judgeList = [i.strip('\n') for i in judgeList]
-    semanticPath = os.path.join(configuration['path']['compiler'], 'semantic.bash')
-    print(' == 2 ==[ ]== Semantic Judge Start')
-    totalNum = len(judgeList)
-    acceptedNum = 0
-    wrongNum = 0
-    judgeResultList = []
-    for case in judgeList:
-        judgeCaseResult = {}
-        judgeCaseResult['case'] = case
-        judgeCaseResult['stage'] = 'semantic'
-        # load test case
-        caseData = open(os.path.join(semaPath, case), 'r').readlines()
-        caseData = [i.strip('\n') for i in caseData]
-        metaIdx = (caseData.index('/*'), caseData.index('*/'))
-        metaArea = caseData[metaIdx[0] + 1: metaIdx[1]]
-        metaArea = [i.split(': ') for i in metaArea]
-        metaDict = {i[0]:i[1] for i in metaArea}
-        expectedResult = metaDict['Verdict'] == 'Success'
-        print(' == 2 ==[ ]==[ ]== Judge:{}.'.format(case), end='\r')
-        dataArea = '\n'.join(caseData[metaIdx[1] + 1:])
-        process = subprocess.Popen(["bash", semanticPath], cwd=configuration['path']['compiler'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-        try:
-            process.stdin.write(dataArea.encode('utf-8'))
-            process.stdin.close()
-            process.wait(configuration['timelimit'])
+    output_start_idx = lines.index('=== output ===') + 1
+    output_end_idx = lines.index('=== end ===', output_start_idx)
+    output_text = '\n'.join(lines[output_start_idx:output_end_idx])
 
-            stdout_result = process.stdout.readlines()
-            stderr_result = process.stderr.readlines()
-            stdout_result_str = ''.join([i.decode() for i in stdout_result])
-            stderr_result_str = ''.join([i.decode() for i in stderr_result])
-            judgeCaseResult['stdout'] = stdout_result_str
-            judgeCaseResult['stderr'] = stderr_result_str
+    return src_text, input_text, output_text
 
-            if process.returncode == 0 and expectedResult:
-                print('{} == 2 ==[ ]==[√]== Accepted:{}.{}'.format(color_green, case, color_none))
-                acceptedNum = acceptedNum + 1
-                judgeCaseResult['verdict'] = 'Accepted'
-            elif process.returncode != 0 and (not expectedResult):
-                print('{} == 2 ==[ ]==[√]== Accepted:{}.{}'.format(color_green, case, color_none))
-                acceptedNum = acceptedNum + 1
-                judgeCaseResult['verdict'] = 'Accepted'
-            else:
-                print('{} == 2 ==[ ]==[x]== Wrong Answer:{}.{}'.format(color_red, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Wrong Answer'
-            pass
-        except subprocess.TimeoutExpired:
-            print('{} == 2 ==[ ]==[T]== Time Limit Exceeded:{}.{}'.format(color_yellow, case, color_none))
-            wrongNum = wrongNum + 1
-            judgeCaseResult['verdict'] = 'Time Limit Exceeded'
-            try:
-                process.kill()
-            except Exception:
-                pass
-            pass
-        except Exception as identifier:
-            print('{} == 2 ==[ ]==[R]== Runtime Error:{}, error Message:{}.{}'.format(color_purple, case, identifier, color_none))
-            wrongNum = wrongNum + 1
-            judgeCaseResult['verdict'] = 'Runtime Error'
-            pass
-        judgeResultList.append(judgeCaseResult)
-    if acceptedNum != totalNum:
-        print('{} == 2 ==[x] Semantic Stage Summary: Passed: {} / {}, Ratio: {:.2f}%{}'.format(color_red, acceptedNum, totalNum, acceptedNum * 100.0 / totalNum, color_none))
-    else:
-        print('{} == 2 ==[√] Semantic Stage Summary: Passed: {} / {}, Ratio: {:.2f}% All passed!{}'.format(color_green, acceptedNum, totalNum, acceptedNum * 100.0 / totalNum, color_none))
-    yaml.safe_dump(judgeResultList, open('semantic_result.yaml', 'w', encoding='utf-8'))
-    pass
+if calculate_score:
+    import pandas as pd
+    import numpy as np
+    df = pd.read_csv('./optim.csv', index_col=['name'], thousands=',')
 
+def main():
+    if os.system(compile_cmd):
+        print(color_red + "Fail when building your compiler...")
+        return
+    # test_cases = collect_test_cases()
+    test_cases = ['test.mx']
+    os.system('cp %s ./builtin.s' % builtin_path)
+    total = 0
+    passed = 0
+    continue_fail = 0
+    score = []
+    max_len = max(len(i) for i in test_cases)
+    for t in test_cases:
+        if halt_on_3_fails and (continue_fail > 2):
+            exit(1)
+        total += 1
+        src_text, input_text, output_text = parse_test_case(test_cases_dir + t)
+        case_name = t[:-3]
+        with open('test.mx', 'w') as f:
+            f.write(src_text)
+        with open('test.in', 'w') as f:
+            f.write(input_text)
+        with open('test.ans', 'w') as f:
+            f.write(output_text)
 
-def runCodegen():
-    judgeList = open(os.path.join(configuration['path']['dataset'], 'codegen/judgelist.txt'), 'r', encoding='utf-8').readlines()
-    codegenPath = os.path.join(configuration['path']['dataset'], 'codegen')
-    judgeList = [i.strip('\n') for i in judgeList]
-    codegenScriptPath = os.path.join(configuration['path']['compiler'], 'codegen.bash')
-    print(' == 3 ==[ ]== Codegen Judge Start')
-    totalNum = len(judgeList)
-    acceptedNum = 0
-    wrongNum = 0
-    judgeResultList = []
-    for case in judgeList:
-        judgeCaseResult = {}
-        judgeCaseResult['case'] = case
-        judgeCaseResult['stage'] = 'codegen'
+        print(t + ':', end='')
+        for i in range(len(t), max_len):
+            print(end = ' ')
+        start = time.time()
+        if os.system('%s < ./test.mx > test.s' % execute_cmd):
+            print(color_red + "Compilation failed" + color_none)
+            continue_fail += 1
+            continue
+        print("(T=%.2fs)" % (time.time() - start), end=" ")
+        if test_codegen:
+            if use_llvm:
+                os.system('mv ./test.s ./test.ll')
+                os.system(llc_cmd + ' --march=riscv32 -mattr=+m -o test.s test.ll')
 
-        # load test case
-        caseData = open(os.path.join(codegenPath, case), 'r').readlines()
-        caseData = [i.strip('\n') for i in caseData]
-        metaIdx = (caseData.index('/*'), caseData.index('*/'))
-        metaArea = caseData[metaIdx[0] + 1: metaIdx[1]]
-        metaConfigArea = []
-        inputOrOutput = False
-        for i in metaArea:
-            if '===' in i: inputOrOutput = not inputOrOutput
-            if inputOrOutput: continue
-            if '===' in i or 'output' in i or 'Input' in i or 'Output' in i or ':' not in i: continue
-            metaConfigArea.append(i)
-        metaConfigArea = [i.split(': ') for i in metaConfigArea]
-        metaDict = {i[0]:i[1] for i in metaConfigArea}
-
-        newMetaArea = metaArea[metaArea.index('=== end ===') + 1:]
-        inputDataStr = '\n'.join(metaArea[metaArea.index('=== input ===') + 1 : metaArea.index('=== end ===')])
-        outputLines = newMetaArea[newMetaArea.index('=== output ===') + 1 : newMetaArea.index('=== end ===')]
-        #if outputLines[-1] == '':
-        #    outputLines.pop(-1)
-        outputDataStr = '\n'.join(outputLines)
-
-        expectedExitCode = int(metaDict['ExitCode'])
-        instLimit = int(metaDict['InstLimit'])
-        print(' == 3 ==[ ]==[ ]== Judge:{}.'.format(case), end='\r')
-        dataArea = '\n'.join(caseData[metaIdx[1] + 1:])
-        process = subprocess.Popen(["bash", codegenScriptPath], cwd=configuration['path']['compiler'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-        try:
-            process.stdin.write(dataArea.encode('utf-8'))
-            process.stdin.close()
-            process.wait(configuration['timelimit'])
-
-            stdout_result = process.stdout.readlines()
-            stderr_result = process.stderr.readlines()
-            stdout_result_str = ''.join([i.decode() for i in stdout_result])
-            stderr_result_str = ''.join([i.decode() for i in stderr_result])
-            judgeCaseResult['Compiler-Output'] = stdout_result_str
-            judgeCaseResult['Compiler-Stderr'] = stderr_result_str
-            judgeCaseResult['Compiler-ExitCode'] = process.returncode
-
-            path2ravel = configuration['path']['simulator']
-            path2ravelExecutable = configuration['path']['simulator-executable']
-            with open(os.path.join(path2ravel, 'test.s'), 'w') as f:
-                f.write(stdout_result_str)
-                f.close()
-            with open(os.path.join(path2ravel, 'test.in'), 'w') as f:
-                f.write(inputDataStr)
-                f.close()
-            with open(os.path.join(path2ravel, 'builtin.s'), 'w') as f:
-                f.write(''.join(open(configuration['path']['built-in'], 'r').readlines()))
-                f.close()
-            process_sim = subprocess.Popen([path2ravelExecutable, "--oj-mode"], cwd=configuration['path']['simulator'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-            sim_returncode = process_sim.wait(90)
-
-            if sim_returncode != 0:
-                print('{} == 3 ==[ ]==[x]== Failed: Simulation Failure:{}, exit code: {}.{}'.format(color_red, case, sim_returncode, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Failed: Simulation Failure'
+            if os.system('%s --oj-mode < test.in 1>ravel.out 2>/dev/null'
+                         % ravel_path):
+                print(color_red + "Runtime error" + color_none)
                 continue
+            if os.system('diff -B -b test.out test.ans > diff.out'):
+                print(color_red + "Wrong answer" + color_none)
+                continue
+        passed += 1
+        continue_fail = 0
 
-            report_list = [i.decode() for i in process_sim.stdout.readlines()]
-            key_list = [i.strip().split(': ') for i in report_list[1:4]]
-            report_dict = {i[0]: int(i[1]) for i in key_list}
-
-            simulatorOutput = '\n'.join(map(lambda x: x.strip('\n'), open(os.path.join(path2ravel, 'test.out'), 'r').readlines()))
-
-            outputMatch = simulatorOutput == outputDataStr
-            exitcodeMatch = report_dict['exit code'] == expectedExitCode 
-            timeScriptMatch = instLimit == -1 or report_dict['time'] < instLimit
-            compileExitcode = process.returncode == 0
-            judgeCaseResult['Target-Output'] = simulatorOutput
-            judgeCaseResult['Target-Inst'] = report_dict['time']
-            judgeCaseResult['Target-ExitCode'] = report_dict['exit code']
-
-
-            if compileExitcode and exitcodeMatch and timeScriptMatch and outputMatch:
-                print('{} == 3 ==[ ]==[√]== Accepted:{}.{}'.format(color_green, case, color_none))
-                acceptedNum = acceptedNum + 1
-                judgeCaseResult['verdict'] = 'Accepted'
-            elif compileExitcode and exitcodeMatch and (not timeScriptMatch) and outputMatch:
-                print('{} == 3 ==[ ]==[T]== Time Limit Exceeded:{}.{}'.format(color_yellow, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Time Limit Exceeded'
-            elif compileExitcode and (not exitcodeMatch) and timeScriptMatch and outputMatch:
-                print('{} == 3 ==[ ]==[x]== Failed: Exitcode Mismatch:{}.{}'.format(color_red, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Failed: Exitcode Mismatch'
-            elif compileExitcode and exitcodeMatch and timeScriptMatch and (not outputMatch):
-                print('{} == 3 ==[ ]==[x]== Failed: Compiled Output Mismatch:{}.{}'.format(color_red, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Failed: Compiled Output Mismatch'
-            else:
-                print('{} == 3 ==[ ]==[x]== Failed:{}.{}'.format(color_red, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Failed:'
-            pass
-        except subprocess.TimeoutExpired as identifier:
-            if identifier.cmd[0] == 'sh':
-                print('{} == 3 ==[ ]==[T]== Compile Time Limit Exceeded:{}.{}'.format(color_yellow, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Compile Time Limit Exceeded'
-                try:
-                    process.kill()
-                except Exception:
-                    pass
-            else:
-                print('{} == 3 ==[ ]==[x]== Failed: Simulation Time Limit Exceeded:{}.{}'.format(color_red, case, color_none))
-                wrongNum = wrongNum + 1
-                judgeCaseResult['verdict'] = 'Failed: Simulation Time Limit Exceeded'
-            pass
-        except Exception as identifier:
-            print('{} == 3 ==[ ]==[R]== Runtime Error:{}, error Message:{}.{}'.format(color_purple, case, identifier, color_none))
-            wrongNum = wrongNum + 1
-            judgeCaseResult['verdict'] = 'Runtime Error'
-            pass
-        judgeResultList.append(judgeCaseResult)
-    if acceptedNum != totalNum:
-        print('{} == 3 ==[x] Codegen Stage Summary: Passed: {} / {}, Ratio: {:.2f}%{}'.format(color_red, acceptedNum, totalNum, acceptedNum * 100.0 / totalNum, color_none))
-    else:
-        print('{} == 3 ==[√] Codegen Stage Summary: Passed: {} / {}, Ratio: {:.2f}% All passed!{}'.format(color_green, acceptedNum, totalNum, acceptedNum * 100.0 / totalNum, color_none))
-    yaml.safe_dump(judgeResultList, open('codegen_result.yaml', 'w', encoding='utf-8'))
-    pass
-
-
+        ravel_out = open("ravel.out")
+        time_field = None
+        while True:
+            s = ravel_out.readline()
+            if s.count("time") > 0:
+                time_field = int(s[5:-1])
+                break
+        if calculate_score:
+            x1 = df.loc['O1'][case_name] * 1.5
+            x2 = df.loc['O1'][case_name]
+            y1 = 1.0
+            y2 = 4.0
+            k = (y2 - y1) / (x2 - x1)
+            sc = np.clip(k * (time_field - x1) + y1, 0, 5)
+            score.append(sc)
+        else:
+            sc = -1
+        print(color_green + "Accepted" + color_none + (" %10d [%.2f]" % (time_field, sc)))
+        
+    print("total {}, passed {}, ratio {}".format(total, passed, passed / total))
+    if calculate_score:
+        score = np.sort(np.array(score))
+        print(np.mean(score[1:-1]) * 10)
+        
 if __name__ == '__main__':
-    content = open('config.yaml', 'r', encoding='utf-8').read()
-    configuration = yaml.safe_load(content)
-    assert 'stage' in configuration.keys()
-    assert 'path' in configuration.keys()
-    assert 'compiler' in configuration['path'].keys()
-    assert 'dataset' in configuration['path'].keys()
-    assert 'timelimit' in configuration.keys()
-    assert 'memlimit' in configuration.keys()
-    assert 'instlimit' in configuration.keys()
-    assert 'buildlimit' in configuration.keys()
-    buildCompiler()
-    if configuration['stage'] == 'semantic':
-        runSemantic()
-    elif configuration['stage'] == 'codegen' or configuration['stage'] == 'optimize':
-        runCodegen()
-    else:
-        print(' [!] Error: stage can only be [semantic, codegen, optimize]')
-    print(' == Judge Finished')
+    main()

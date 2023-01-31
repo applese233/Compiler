@@ -4,6 +4,7 @@ import backend.*;
 import Util.MxLiteErrorListener;
 import Util.Scope;
 import IR.*;
+import ASM.*;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -17,9 +18,24 @@ import java.io.InputStream;
 public class Compiler {
 	public static void main(String[] args) throws Exception {
 		String name = "test.mx";
-		InputStream input = System.in;
+		// InputStream input = System.in;
 		System.out.println("Here.");
-		// FileInputStream input = new FileInputStream(name);
+		FileInputStream input = new FileInputStream(name);
+        boolean tag = true;
+        if (args.length > 0) {
+            for (String arg : args) {
+                switch (arg) {
+                    case "-semantic": {
+						tag = false;
+						break;
+					}
+                    case "-codegen": {
+						tag = true;
+						break;
+					}
+                }
+            }
+        }
 		try {
 			System.out.println("Here2.");
 			ProgNode ASTRoot;
@@ -51,13 +67,21 @@ public class Compiler {
 			new SemanticChecker(globalScope).Visit(ASTRoot);
 			System.out.println("Checker End.");
 
-			// return;
+			if(!tag)
+				return;
 
 			Module_ module = new Module_();
 			new IRBuilder(globalScope, module).Visit(ASTRoot);
 			IRPrinter irPrinter = new IRPrinter("myllvm.ll");
 			irPrinter.Visit(module);
+			System.out.println("IR.");
 
+			ASMModule ASM = new ASMModule();
+			new ASMBuilder(ASM).Visit(module);
+
+			ASMPrinter result = new ASMPrinter("output.s");
+			result.Visit(ASM);
+			System.out.println("gen.");
 		}
 		catch (Error error) {
 			System.err.println(error.toString());
