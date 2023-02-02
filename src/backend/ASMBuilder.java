@@ -70,11 +70,9 @@ public class ASMBuilder implements IRVisitor {
 			else if(operand instanceof NullOperand) {
 				value = 0;
 			}
-
 			if(value == 0) {
 				return zero;
 			}
-
 			Immediate imm = new Immediate(value);
 			nowBlock.AddInst(new Li(res, imm));
 		}
