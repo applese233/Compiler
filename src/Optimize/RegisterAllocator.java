@@ -3,6 +3,7 @@ package Optimize;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
@@ -83,8 +84,35 @@ public class RegisterAllocator {
 		s0 = module.phyRegList.get(8);
 	}
 
-	public void FreezeMoves(ASMRegister u) {
+	public HashSet<Mv> NodeMoves(ASMRegister x) {
+		HashSet<Mv> res = new HashSet<>();
+		res.addAll(worklistMoves);
+		res.retainAll(moveList.get(x));
+		return res;
+	}
 
+	public boolean MoveRelated(ASMRegister x) {
+		return NodeMoves(x).size() > 0;
+	}
+
+	public void FreezeMoves(ASMRegister u) {
+		for(Mv m : NodeMoves(u)) {
+			ASMRegister x = m.rd;
+			ASMRegister y = m.rs1;
+			ASMRegister v;
+			if(GetAlias(y) == GetAlias(u)) {
+				v = GetAlias(x);
+			}
+			else {
+				v = GetAlias(y);
+			}
+			activeMoves.remove(m);
+			frozenMoves.add(m);
+			if(NodeMoves(v).size() == 0 && degree.get(v) < K) {
+				freezeWorklist.remove(v);
+				simplifyWorklist.add(v);
+			}
+		}
 	}
 
 	public void Freeze() {
@@ -94,20 +122,36 @@ public class RegisterAllocator {
 		FreezeMoves(u);
 	}
 
-	public void Combine(ASMRegister u, ASMRegister v) {
-
+	public void EnableMoves(HashSet<ASMRegister> regSet) {
+		for(ASMRegister x : regSet) {
+			for(Mv y : NodeMoves(x)) {
+				if(activeMoves.contains(y)) {
+					activeMoves.remove(y);
+					worklistMoves.add(y);
+				}
+			}
+		}
 	}
 
 	public boolean Conservative(HashSet<ASMRegister> tmp) {
-
+		int res = 0;
+		for(ASMRegister x : tmp) {
+			if(degree.get(x) >= K) {
+				res ++;
+			}
+		}
+		return res < K;
 	}
 
 	public boolean OK(ASMRegister x, ASMRegister y) {
-
+		return degree.get(x) < K || precolored.contains(x) || adjSet.contains(new Pair(x, y));
 	}
 
 	public void AddWorklist(ASMRegister u) {
-
+		if((!precolored.contains(u)) && (!MoveRelated(u)) && degree.get(u) < K) {
+			freezeWorklist.remove(u);
+			simplifyWorklist.add(u);
+		}
 	}
 
 	public ASMRegister GetAlias(ASMRegister x) {
@@ -121,11 +165,26 @@ public class RegisterAllocator {
 	}
 
 	public HashSet<ASMRegister> Adjacent(ASMRegister nowReg) {
-
+		HashSet<ASMRegister> res = new HashSet<>(adjList.get(nowReg));
+		res.removeAll(selectstack);
+		res.removeAll(coalescedNodes);
+		return res;
 	}
 
 	public void DecrementDegree(ASMRegister x) {
-
+		int d = degree.get(x);
+		degree.replace(x, d - 1);
+		if(d == K) {
+			HashSet<ASMRegister> regSet = new HashSet<>(Adjacent(x));
+			regSet.add(x);
+			EnableMoves(regSet);
+			if(MoveRelated(x)) {
+				freezeWorklist.add(x);
+			}
+			else {
+				simplifyWorklist.add(x);
+			}
+		}
 	}
 
 	public void Simplify() {
@@ -138,27 +197,124 @@ public class RegisterAllocator {
 	}
 
 	public void MakeWorklist() {
-
-	}
-
-	public void MoveRelated(ASMRegister x) {
-
-	}
-
-	public HashSet<Mv> NodeMoves(ASMRegister x) {
-
-	}
-
-	public void Build() {
-
+		for(ASMRegister x : initialed) {
+			if(degree.get(x) >= K) {
+				spillWorklist.add(x);
+			}
+			else if(MoveRelated(x)) {
+				freezeWorklist.add(x);
+			}
+			else {
+				simplifyWorklist.add(x);
+			}
+		}
 	}
 
 	public void AddEdge(ASMRegister u, ASMRegister v) {
+		if(u != v && !adjSet.contains(new Pair(u, v))) {
+			adjSet.add(new Pair(u, v));
+			adjSet.add(new Pair(v, u));
+			if(!precolored.contains(u)) {
+				adjList.get(u).add(v);
+				degree.replace(u, degree.get(u) + 1);
+			}
+			if(!precolored.contains(v)) {
+				adjList.get(v).add(u);
+				degree.replace(v, degree.get(v) + 1);
+			}
+		}
+	}
 
+	public void Build() {
+		for(ASMBlock x : nowFunction.blockList) {
+			HashSet<ASMRegister> live = blockliveout.get(x);
+			for(int i = x.instList.size() - 1; i >= 0; -- i) {
+				Inst y = x.instList.get(i);
+				if(y instanceof Mv) {
+					live.removeAll(y.use);
+					for(ASMRegister z : y.def) {
+						moveList.get(z).add((Mv) y);
+					}
+					for(ASMRegister z : y.use) {
+						moveList.get(z).add((Mv) y);
+					}
+					worklistMoves.add((Mv) y);
+				}
+				live.addAll(y.def);
+				live.add(zero);
+				for(ASMRegister z : y.def) {
+					for(ASMRegister p : live) {
+						AddEdge(p, z);
+					}
+				}
+				live.removeAll(y.def);
+				live.addAll(y.use);
+			}
+		}
+	}
+
+	public void Combine(ASMRegister u, ASMRegister v) {
+		if(freezeWorklist.contains(v)) {
+			freezeWorklist.remove(v);
+		}
+		else {
+			spillWorklist.remove(v);
+		}
+		coalescedNodes.add(v);
+		alias.replace(v, u);
+		moveList.get(u).addAll(moveList.get(v));
+		HashSet<ASMRegister> tmp = new HashSet<>();
+		tmp.add(v);
+		EnableMoves(tmp);
+		for(ASMRegister x : Adjacent(v)) {
+			AddEdge(x, u);
+			DecrementDegree(x);
+		}
+		if(degree.get(u) >= K && freezeWorklist.contains(u)) {
+			freezeWorklist.remove(u);
+			spillWorklist.add(u);
+		}
 	}
 
 	public void Coalesce() {
-		
+		Mv m = worklistMoves.iterator().next();
+		ASMRegister x = GetAlias(m.rd);
+		ASMRegister y = GetAlias(m.rs1);
+		ASMRegister u, v;
+		if(precolored.contains(y)) {
+			u = y;
+			v = x;
+		}
+		else {
+			u = x;
+			v = y;
+		}
+		worklistMoves.remove(m);
+		if(u == v) {
+			coalescedMoves.remove(m);
+			AddWorklist(u);
+		}
+		else if(precolored.contains(v) || adjSet.contains(new Pair(u, v)) || u == zero || v == zero) {
+			constrainedMoves.add(m);
+			AddWorklist(u);
+			AddWorklist(v);
+		}
+		else {
+			boolean flag = true;
+			for(ASMRegister z : Adjacent(v)) {
+				flag &= OK(z, u);
+			}
+			HashSet<ASMRegister> tmp = new HashSet<>(Adjacent(v));
+			tmp.addAll(Adjacent(v));
+			if((precolored.contains(u) && flag) || (!precolored.contains(u)) && Conservative(tmp)) {
+				coalescedMoves.add(m);
+				Combine(u, v);
+				AddWorklist(u);
+			}
+			else {
+				activeMoves.add(m);
+			}
+		}
 	}
 
 	public void AssignColors() {
@@ -194,7 +350,7 @@ public class RegisterAllocator {
 				if(y instanceof Branch) {
 					x.succ.add(nowFunction.blockMap.get(((Branch) y).dest));
 				}
-				else {
+				else if(y instanceof J) {
 					x.succ.add(nowFunction.blockMap.get(((J) y).dest));
 				}
 			}
@@ -323,10 +479,6 @@ public class RegisterAllocator {
 		FreezeMoves(nowReg);
 	}
 
-	public void VisitModule() {
-
-	}
-
 	public void VisitFunction() {
 		precolored = new HashSet<>();
 		initialed = new HashSet<>();
@@ -395,6 +547,32 @@ public class RegisterAllocator {
 		if(!spilledNodes.isEmpty()) {
 			RewritePrograms();
 			VisitFunction();
+		}
+	}
+
+	public void VisitModule() {
+		for(ASMFunction x : module.funcList) {
+			nowFunction = x;
+			spilled = new HashSet<>();
+			VisitFunction();
+			for(ASMBlock y : nowFunction.blockList) {
+				LinkedList<Inst> newList = new LinkedList<>();
+				for(Inst z : y.instList) {
+					if(z.rs1 instanceof VirtualRegister) {
+						z.rs1 = module.phyRegList.get(color.get(z.rs1));
+					}
+					if(z.rs2 instanceof VirtualRegister) {
+						z.rs2 = module.phyRegList.get(color.get(z.rs2));
+					}
+					if(z.rd instanceof VirtualRegister) {
+						z.rd = module.phyRegList.get(color.get(z.rd));
+					}
+					if(z instanceof Mv && z.rd == z.rs1)
+						continue;
+					newList.add(z);
+				}
+				y.instList = newList;
+			}
 		}
 	}
 }

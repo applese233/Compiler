@@ -11,7 +11,7 @@ import ASM.Inst.*;
 public class ASMPrinter implements ASMVisitor {
 	public PrintWriter file_print;
 	public PhysicalRegister ra, sp, s0, s2;
-	private final String tab = "    ";
+	private final String tab = "	";
 
 	public ASMPrinter(String path) throws FileNotFoundException {
 		file_print = new PrintWriter(new FileOutputStream(path));

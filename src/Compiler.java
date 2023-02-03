@@ -4,6 +4,7 @@ import backend.*;
 import Util.MxLiteErrorListener;
 import Util.Scope;
 import IR.*;
+import Optimize.RegisterAllocator;
 import ASM.*;
 
 import org.antlr.v4.runtime.CharStreams;
@@ -78,6 +79,13 @@ public class Compiler {
 
 			ASMModule ASM = new ASMModule();
 			new ASMBuilder(ASM).Visit(module);
+
+			System.out.println("debug.");
+			ASMPrinter debug = new ASMPrinter("debug.s");
+			debug.Visit(ASM);
+
+			// new ASMRegisterAllocator(ASM).RegisterAllocate();
+			new RegisterAllocator(ASM).VisitModule();
 
 			ASMPrinter result = new ASMPrinter("output.s");
 			result.Visit(ASM);
