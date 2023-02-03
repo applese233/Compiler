@@ -1,8 +1,7 @@
 import AST.*;
 import frontend.*;
 import backend.*;
-import Util.MxLiteErrorListener;
-import Util.Scope;
+import Util.*;
 import IR.*;
 import Optimize.RegisterAllocator;
 import ASM.*;
@@ -38,6 +37,7 @@ public class Compiler {
             }
         }
 		try {
+			BuiltinFunctionASMPrinter builtin_printer = new BuiltinFunctionASMPrinter("builtin.s");
 			System.out.println("Here2.");
 			ProgNode ASTRoot;
 			Scope globalScope = new Scope(null);
@@ -84,8 +84,8 @@ public class Compiler {
 			ASMPrinter debug = new ASMPrinter("debug.s");
 			debug.Visit(ASM);
 
-			// new ASMRegisterAllocator(ASM).RegisterAllocate();
-			new RegisterAllocator(ASM).VisitModule();
+			new ASMRegisterAllocator(ASM).RegisterAllocate();
+			// new RegisterAllocator(ASM).VisitModule();
 
 			ASMPrinter result = new ASMPrinter("output.s");
 			result.Visit(ASM);
