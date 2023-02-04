@@ -95,7 +95,7 @@ public class ASMPrinter implements ASMVisitor {
 
 	@Override
 	public void Visit(ASMFunction it) {
-		file_print.println(tab + ".global" + tab + it.name);
+		file_print.println(tab + ".globl" + tab + it.name);
 		file_print.println(tab + ".p2align" + tab + 2);
 		file_print.println(tab + ".type" + tab + it.name + ",@function");
 		file_print.println(it.name + ":");

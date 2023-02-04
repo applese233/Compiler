@@ -13,7 +13,7 @@ public class Compare extends Inst {
 
 	@Override
 	public String toString() {
-		if(op.equals("seqz") || op.equals("neqz")) {
+		if(op.equals("seqz") || op.equals("snez")) {
 			return op + "\t" + rd + ", " + rs1;
 		}
 		else {
