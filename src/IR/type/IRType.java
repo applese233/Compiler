@@ -14,4 +14,9 @@ public abstract class IRType {
 	public abstract String toString();
 
 	public abstract int getSize();
+
+	public int Getdim() {
+		System.out.println(dim);
+		return dim;
+	}
 }

@@ -65,8 +65,7 @@ public class Type {
 		isLeftValue = _isLeftValue;
 		varMap = new HashMap<>();
 		funcMap = new HashMap<>();
-		if(type == basicType.Class)
-			irType = new ClassType(identifier);
+		irType = new ClassType(identifier);
 	}
 
 	public Type(String _identifier, Type returnType, ArrayList<Type> parameters) {
@@ -76,8 +75,6 @@ public class Type {
 		functionParameters = parameters;
 		dim = 0;
 		isLeftValue = false;
-		if(type == basicType.Class)
-			irType = new ClassType(identifier);
 	}
 
 	public Type(Type _type) {
@@ -110,6 +107,7 @@ public class Type {
 
 	public Type(Type _type, int _dim) {
 		type = _type.type;
+		irType = _type.irType;
 		identifier = _type.identifier;
 		dim = _dim;
 		isLeftValue = _type.isLeftValue;
@@ -137,6 +135,7 @@ public class Type {
 
 	public Type(Type _type, String _identifier) {
 		type = _type.type;
+		irType = _type.irType;
 		identifier = _identifier;
 		dim = _type.dim;
 		isLeftValue = _type.isLeftValue;
@@ -190,8 +189,7 @@ public class Type {
 	}
 
 	public IRType GetIRType() {
-		System.out.println(type);
-		System.out.println(irType);
+		System.out.println("GetIR: " + identifier + " " + type + " " + irType);
 		if(type == basicType.Int)
 			return new IntType(32);
 		else if(type == basicType.Bool)
@@ -202,6 +200,11 @@ public class Type {
 			return new VoidType();
 		else if(type == basicType.Function)
 			return functionReturnType.GetIRType();
+		else if(type == basicType.Class) {
+			if(irType == null)
+				irType = new ClassType(identifier);
+			return irType;
+		}
 		else {
 			System.out.println(dim);
 			if(dim > 0) {

@@ -216,12 +216,16 @@ public class IRBuilder implements ASTVisitor {
 
 	@Override
 	public void Visit(VarDecStmtNode it) {
+		System.out.println("VarDecStmtNode. " + it.id + " " + it.type.type + " " + it.type.dim);
 		Type nowType = globalScope.TypeGet(it.type, null);
+		System.out.println(nowType.identifier + " " + nowType.type + " " + nowType.dim);
 		IRType nowIRType = nowType.GetIRType();
 		if(nowIRType instanceof ClassType) {
 			nowIRType = new PointerType(nowIRType);
 		}
+		System.out.println(nowIRType);
 		for(int i = 1; i <= it.type.dim; ++ i) {
+			System.out.println(nowIRType.Getdim());
 			nowIRType = new PointerType(nowIRType);
 		}
 		if(Global) {
@@ -602,8 +606,13 @@ public class IRBuilder implements ASTVisitor {
 
 	@Override
 	public void Visit(FuncExprNode it) {
+		System.out.println("FuncExprNode: " + it.pos + " " + it.type.identifier + " " + it.type.type + " " + it.type.dim);
+		if(it.type.type == basicType.Function)
+			System.out.println("ReturnType = " + it.type.functionReturnType.type + " " + it.type.functionReturnType.dim);
 		String funcId = "";
 		IRType nowIRType = it.type.GetIRType();
+		if(it.id instanceof ClassExprNode)
+			System.out.println("Class.");
 		if(nowIRType instanceof ClassType) {
 			nowIRType = new PointerType(nowIRType);
 		}
@@ -614,9 +623,15 @@ public class IRBuilder implements ASTVisitor {
 		}
 		ArrayList<Operand> paraList = new ArrayList<>();
 
-		if(it.id instanceof ClassExprNode && ((ClassExprNode) it.id).name.type.type == basicType.String) {
+		boolean stringBuiltin = false;
+		String id = it.type.identifier;
+		if(id.equals("ord") || id.equals("eq") || id.equals("ne") || id.equals("lt") || id.equals("le") || id.equals("gt") || id.equals("ge") || id.equals("concatenate") || id.equals("length") || id.equals("substring") || id.equals("parseInt"))
+			stringBuiltin = true;
+		if((it.id instanceof ClassExprNode) && stringBuiltin) {
+			System.out.println("What?");
 			((ClassExprNode) it.id).name.Accept(this);
 			funcId = "_str_" + ((ClassExprNode) it.id).id;
+			System.out.println("What? " + funcId);
 
 			Operand strReg;
 			if(((ClassExprNode) it.id).name.operand.loadneed) {
@@ -662,12 +677,15 @@ public class IRBuilder implements ASTVisitor {
 		}
 		else if(it.id instanceof ClassExprNode) {
 			((ClassExprNode) it.id).name.Accept(this);
+			System.out.println("Here? " + ((ClassExprNode) it.id).id);
 
 			IRType classPointerType;
 			IRType nameIRType = ((ClassExprNode) it.id).name.operand.type;
 			classPointerType = nameIRType;
+			System.out.println(nameIRType);
 			Operand classReg;
 			if(((ClassExprNode) it.id).name.operand.loadneed) {
+				System.out.println("need.");
 				IRType newIRType = ((PointerType) nameIRType).type;
 				classPointerType = newIRType;
 				num ++;
@@ -678,6 +696,7 @@ public class IRBuilder implements ASTVisitor {
 				classReg = ((ClassExprNode) it.id).name.operand;
 			}
 			IRType classIRType = ((PointerType) classPointerType).type;
+			System.out.println(classIRType);
 
 			funcId = ((ClassType) classIRType).name + "_" + ((ClassExprNode) it.id).id;
 
@@ -771,9 +790,11 @@ public class IRBuilder implements ASTVisitor {
 	@Override
 	public void Visit(ClassExprNode it) {
 		it.name.Accept(this);
+		System.out.println("ClassExprNode. " + it.id);
 
 		IRType classPointerType;
 		IRType nameIRType = it.name.operand.type;
+		System.out.println(nameIRType);
 		classPointerType = nameIRType;
 		Operand classReg;
 		if(it.name.operand.loadneed) {
@@ -790,6 +811,12 @@ public class IRBuilder implements ASTVisitor {
 
 		ArrayList<Operand> nowparaList = new ArrayList<>();
 		nowparaList.add(new IntConst(0));
+		for(String s : ((ClassType) classIRType).nameList)
+			System.out.print(s + " ");
+		System.out.println();
+		for(IRType s : ((ClassType) classIRType).typeList)
+			System.out.print(s + " ");
+		System.out.println();
 		int pos = ((ClassType) classIRType).nameList.indexOf(it.id);
 		IRType nowIRType = ((ClassType) classIRType).typeList.get(pos);
 		nowparaList.add(new IntConst(pos));
