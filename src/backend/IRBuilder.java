@@ -182,6 +182,7 @@ public class IRBuilder implements ASTVisitor {
 			IRType nowIRType = nowType.GetIRType();
 			for(VarDecStmtNode x : it.varlist) {
 				Type xType = globalScope.TypeGet(x.type, null);
+				System.out.println(xType.type);
 				IRType xIRType = xType.GetIRType();
 				if(xIRType instanceof ClassType) {
 					xIRType = new PointerType(xIRType);
@@ -897,7 +898,7 @@ public class IRBuilder implements ASTVisitor {
 	@Override
 	public void Visit(NewExprNode it) {
 		IRType nowIRType = it.type.GetIRType();
-		int dim = it.type.dim;
+		int dim = it.typeNode.dim;
 
 		if(it.exprList == null) {
 			int size = 0;

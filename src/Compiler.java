@@ -80,16 +80,17 @@ public class Compiler {
 			ASMModule ASM = new ASMModule();
 			new ASMBuilder(ASM).Visit(module);
 
-			System.out.println("debug.");
-			ASMPrinter debug = new ASMPrinter("debug.s");
-			debug.Visit(ASM);
+			// System.out.println("debug.");
+			// ASMPrinter debug = new ASMPrinter("debug.s");
+			// debug.Visit(ASM);
+			System.out.println("alloca.");
 
 			// new ASMRegisterAllocator(ASM).RegisterAllocate();
 			new RegisterAllocator(ASM).VisitModule();
 
+			System.out.println("gen.");
 			ASMPrinter result = new ASMPrinter("output.s");
 			result.Visit(ASM);
-			System.out.println("gen.");
 		}
 		catch (Error error) {
 			System.err.println(error.toString());

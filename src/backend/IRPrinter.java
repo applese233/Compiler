@@ -103,6 +103,7 @@ public class IRPrinter implements IRVisitor {
 	
 	@Override
 	public void Visit(Ret it) {
+		System.out.println("IR_Ret.");
 		file_print.println(tab + it.toString());
 	}
 	

@@ -3,6 +3,7 @@ package Util;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import IR.type.ClassType;
 import IR.type.IRType;
 import IR.type.IntType;
 import IR.type.PointerType;
@@ -30,23 +31,31 @@ public class Type {
 	public Type(basicType _type, int _dim) {
 		type = _type;
 		dim = _dim;
+		if(type == basicType.Class)
+			irType = new ClassType(identifier);
 	}
 
 	public Type(basicType _type, String _identifier) {
 		type = _type;
 		identifier = _identifier;
+		if(type == basicType.Class)
+			irType = new ClassType(identifier);
 	}
 
 	public Type(basicType _type, int _dim, String _identifier) {
 		type = _type;
 		dim = _dim;
 		identifier = _identifier;
+		if(type == basicType.Class)
+			irType = new ClassType(identifier);
 	}
 
 	public Type(basicType _type, int _dim, boolean _isLeftValue) {
 		type = _type;
 		dim = _dim;
 		isLeftValue = _isLeftValue;
+		if(type == basicType.Class)
+			irType = new ClassType(identifier);
 	}
 
 	public Type(String _identifier, int _dim, boolean _isLeftValue) {
@@ -56,6 +65,8 @@ public class Type {
 		isLeftValue = _isLeftValue;
 		varMap = new HashMap<>();
 		funcMap = new HashMap<>();
+		if(type == basicType.Class)
+			irType = new ClassType(identifier);
 	}
 
 	public Type(String _identifier, Type returnType, ArrayList<Type> parameters) {
@@ -65,10 +76,13 @@ public class Type {
 		functionParameters = parameters;
 		dim = 0;
 		isLeftValue = false;
+		if(type == basicType.Class)
+			irType = new ClassType(identifier);
 	}
 
 	public Type(Type _type) {
 		type = _type.type;
+		irType = _type.irType;
 		identifier = _type.identifier;
 		dim = _type.dim;
 		isLeftValue = _type.isLeftValue;
@@ -176,6 +190,8 @@ public class Type {
 	}
 
 	public IRType GetIRType() {
+		System.out.println(type);
+		System.out.println(irType);
 		if(type == basicType.Int)
 			return new IntType(32);
 		else if(type == basicType.Bool)
@@ -187,6 +203,7 @@ public class Type {
 		else if(type == basicType.Function)
 			return functionReturnType.GetIRType();
 		else {
+			System.out.println(dim);
 			if(dim > 0) {
 				if(type == basicType.Int)
 					return new IntType(32);

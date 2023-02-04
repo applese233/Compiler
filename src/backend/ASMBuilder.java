@@ -252,6 +252,7 @@ public class ASMBuilder implements IRVisitor {
 
 	@Override
 	public void Visit(IR.inst.Ret it) {
+		System.out.println("ASM_Ret.");
 		for(int i = 0; i < module.callee.size(); ++ i) {
 			PhysicalRegister x = module.callee.get(i);
 			VirtualRegister EX = calleeList.get(i);

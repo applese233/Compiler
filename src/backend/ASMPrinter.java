@@ -59,6 +59,7 @@ public class ASMPrinter implements ASMVisitor {
 
 	@Override
 	public void Visit(Ret it) {
+		System.out.println("Here.");
 		file_print.println(tab + it.toString());
 	}
 
@@ -74,6 +75,7 @@ public class ASMPrinter implements ASMVisitor {
 
 	@Override
 	public void Visit(ASMModule it) {
+		System.out.println("ASM Module Visit.");
 		ra = it.phyRegList.get(1);
 		sp = it.phyRegList.get(2);
 		s0 = it.phyRegList.get(8);
@@ -95,6 +97,7 @@ public class ASMPrinter implements ASMVisitor {
 
 	@Override
 	public void Visit(ASMFunction it) {
+		System.out.println("ASM Func Visit. " + it.name);
 		file_print.println(tab + ".globl" + tab + it.name);
 		file_print.println(tab + ".p2align" + tab + 2);
 		file_print.println(tab + ".type" + tab + it.name + ",@function");
@@ -104,6 +107,7 @@ public class ASMPrinter implements ASMVisitor {
 
 		ASMBlock firstBlock = it.blockList.get(0);
 		ASMBlock lastBlock = it.blockList.get(it.blockList.size() - 1);
+		System.out.println("off = " + off + " first_name = " + firstBlock.name + " last_name = " + lastBlock.name);
 		if(-2024 <= off && off <= 2023) {
 			firstBlock.instList.addFirst(new Arithmetic("add", s0, sp, null, new Immediate(off + 12)));
 			firstBlock.instList.addFirst(new Sw(sp, s0, new Immediate(off + 4)));
@@ -145,6 +149,10 @@ public class ASMPrinter implements ASMVisitor {
 
 	@Override
 	public void Visit(ASMBlock it) {
+		System.out.println("ASM Block Visit. " + it.name + " instList:");
+		for(Inst i : it.instList)
+			System.out.println(i.toString());
+		System.out.println();
 		file_print.println(it.name + ":");
 		it.instList.forEach(x -> x.Accept(this));
 	}
