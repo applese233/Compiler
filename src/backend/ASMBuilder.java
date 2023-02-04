@@ -332,7 +332,7 @@ public class ASMBuilder implements IRVisitor {
 	@Override
 	public void Visit(Getelementptr it) {
 		if(it.value instanceof GlobalVariable) {
-			regMap.put(nowFunction + "_" + it.result.name, getReg(it.value));
+			regMap.put(nowFunction.name + "_" + it.result.name, getReg(it.value));
 		}
 		else {
 			ASMRegister rd = getReg(it.result);

@@ -7,7 +7,7 @@ import java.io.*;
 
 public class IRPrinter implements IRVisitor {
 	public PrintWriter file_print;
-	private final String tab = "    ";
+	private final String tab = "	";
 
 	public IRPrinter(String path) throws FileNotFoundException {
 		file_print = new PrintWriter(new FileOutputStream(path));
@@ -83,12 +83,12 @@ public class IRPrinter implements IRVisitor {
 
 	@Override
 	public void Visit(Define it) {
-		file_print.println(tab + it.toString());
+		file_print.println(it.toString());
 	}
 	
 	@Override
 	public void Visit(Global it) {
-		file_print.println(tab + it.toString());
+		file_print.println(it.toString());
 	}
 	
 	@Override

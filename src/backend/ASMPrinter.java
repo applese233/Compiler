@@ -77,7 +77,7 @@ public class ASMPrinter implements ASMVisitor {
 		ra = it.phyRegList.get(1);
 		sp = it.phyRegList.get(2);
 		s0 = it.phyRegList.get(8);
-		s2 = it.phyRegList.get(10);
+		s2 = it.phyRegList.get(18);
 
 		file_print.println(tab + ".text");
 		file_print.println("");

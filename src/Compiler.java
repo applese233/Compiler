@@ -17,10 +17,10 @@ import java.io.InputStream;
 
 public class Compiler {
 	public static void main(String[] args) throws Exception {
-		String name = "test.mx";
-		// InputStream input = System.in;
+		// String name = "test.mx";
+		// FileInputStream input = new FileInputStream(name);
+		InputStream input = System.in;
 		System.out.println("Here.");
-		FileInputStream input = new FileInputStream(name);
         boolean tag = true;
         if (args.length > 0) {
             for (String arg : args) {
@@ -37,7 +37,7 @@ public class Compiler {
             }
         }
 		try {
-			BuiltinFunctionASMPrinter builtin_printer = new BuiltinFunctionASMPrinter("builtin.s");
+			// BuiltinFunctionASMPrinter builtin_printer = new BuiltinFunctionASMPrinter("builtin.s");
 			System.out.println("Here2.");
 			ProgNode ASTRoot;
 			Scope globalScope = new Scope(null);

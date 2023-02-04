@@ -45,7 +45,7 @@ main:
 	j	.main_L1
 .main_L1:
 	la	VR_EX_16, str1
-	mv	a0, VR7
+	mv	a0, VR_EX_16
 	call	print
 	j	.main_L2
 .main_L2:
@@ -94,7 +94,7 @@ main:
 	j	.main_L12
 .main_L12:
 	la	VR_EX_21, str2
-	mv	a0, VR26
+	mv	a0, VR_EX_21
 	call	print
 	lw	VR27, i
 	mv	a0, VR27
@@ -103,7 +103,7 @@ main:
 	mv	a0, VR28
 	call	print
 	la	VR_EX_22, str3
-	mv	a0, VR29
+	mv	a0, VR_EX_22
 	call	print
 	j	.main_L14
 .main_L13:
@@ -111,7 +111,7 @@ main:
 	mv	a0, VR30
 	call	printInt
 	la	VR_EX_23, str4
-	mv	a0, VR31
+	mv	a0, VR_EX_23
 	call	print
 	j	.main_L14
 .main_L14:
@@ -135,7 +135,7 @@ main:
 	j	.main_L15
 .main_L15:
 	la	VR_EX_26, str5
-	mv	a0, VR39
+	mv	a0, VR_EX_26
 	call	print
 	j	.main_L16
 .main_L16:

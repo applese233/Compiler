@@ -20,6 +20,6 @@ public class Alloca extends Inst {
 
 	@Override
 	public String toString() {
-		return result.toString() + " = alloca" + type.toString();
+		return result.toString() + " = alloca " + type.toString();
 	}
 }

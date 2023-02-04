@@ -12,7 +12,7 @@ public class ArrayType extends IRType {
 
 	@Override
 	public String toString() {
-		return "[" + Integer.toString(arraydim) + "x" + type.toString() + "]";
+		return "[" + Integer.toString(arraydim) + " x " + type.toString() + "]";
 	}
 
 	@Override
