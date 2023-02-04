@@ -37,7 +37,6 @@ public class Compiler {
             }
         }
 		try {
-			BuiltinFunctionASMPrinter builtin_printer = new BuiltinFunctionASMPrinter("builtin.s");
 			System.out.println("Here2.");
 			ProgNode ASTRoot;
 			Scope globalScope = new Scope(null);
@@ -91,6 +90,7 @@ public class Compiler {
 			System.out.println("gen.");
 			ASMPrinter result = new ASMPrinter("output.s");
 			result.Visit(ASM);
+			BuiltinFunctionASMPrinter builtin_printer = new BuiltinFunctionASMPrinter("builtin.s");
 		}
 		catch (Error error) {
 			System.err.println(error.toString());
