@@ -21,21 +21,21 @@ public class Compiler {
 		// FileInputStream input = new FileInputStream(name);
 		InputStream input = System.in;
 		System.out.println("Here.");
-        boolean tag = true;
-        if (args.length > 0) {
-            for (String arg : args) {
-                switch (arg) {
-                    case "-semantic": {
+		boolean tag = true;
+		if (args.length > 0) {
+			for (String arg : args) {
+				switch (arg) {
+					case "-semantic": {
 						tag = false;
 						break;
 					}
-                    case "-codegen": {
+					case "-codegen": {
 						tag = true;
 						break;
 					}
-                }
-            }
-        }
+				}
+			}
+		}
 		try {
 			System.out.println("Here2.");
 			ProgNode ASTRoot;
@@ -84,8 +84,8 @@ public class Compiler {
 			// debug.Visit(ASM);
 			System.out.println("alloca.");
 
-			// new ASMRegisterAllocator(ASM).RegisterAllocate();
-			new RegisterAllocator(ASM).VisitModule();
+			new ASMRegisterAllocator(ASM).RegisterAllocate();
+			// new RegisterAllocator(ASM).VisitModule();
 
 			System.out.println("gen.");
 			ASMPrinter result = new ASMPrinter("output.s");
