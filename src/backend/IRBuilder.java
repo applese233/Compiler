@@ -634,8 +634,10 @@ public class IRBuilder implements ASTVisitor {
 			System.out.println("What? " + funcId);
 
 			Operand strReg;
+			System.out.println(((ClassExprNode) it.id).name.operand.loadneed);
 			if(((ClassExprNode) it.id).name.operand.loadneed) {
 				IRType newType = ((PointerType) ((ClassExprNode) it.id).name.operand.type).type;
+				System.out.println(newType);
 				num ++;
 				strReg = new Register(newType, Integer.toString(num));
 				nowBlock.AddInst(new Load(nowBlock, (Register) strReg, newType, ((ClassExprNode) it.id).name.operand));
@@ -1277,6 +1279,7 @@ public class IRBuilder implements ASTVisitor {
 		}
 
 		if(operand1 instanceof IntConst && operand2 instanceof IntConst) {
+			System.out.println(((IntConst) operand1).val + " " + it.op + ((IntConst) operand2).val);
 			switch(it.op) {
 				case "+": {
 					it.operand = new IntConst(((IntConst) operand1).val + ((IntConst) operand2).val);
@@ -1358,10 +1361,11 @@ public class IRBuilder implements ASTVisitor {
 			}
 			return;
 		}
-
+		System.out.println("Binary: " + it.expr1.type.type + " " + it.expr2.type.type + " " + it.op);
 		if(it.expr1.type.type == basicType.String) {
 			switch(it.op) {
 				case "+": {
+					System.out.println("Concat.");
 					num ++;
 					Register newReg = new Register(nowIRType, Integer.toString(num));
 					ArrayList<Operand> nowparaList = new ArrayList<>();
@@ -1439,6 +1443,7 @@ public class IRBuilder implements ASTVisitor {
 					break;
 				}
 			}
+			return;
 		}
 
 		switch(it.op) {

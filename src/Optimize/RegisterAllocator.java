@@ -555,13 +555,13 @@ public class RegisterAllocator {
 			nowFunction = x;
 			spilled = new HashSet<>();
 			VisitFunction();
-			System.out.println("Func_name = " + x.name);
+			// System.out.println("Func_name = " + x.name);
 			for(ASMBlock y : nowFunction.blockList) {
 				LinkedList<Inst> newList = new LinkedList<>();
-				System.out.println("Block_name = " + y.name);
-				System.out.println("Before Allo:");
+				// System.out.println("Block_name = " + y.name);
+				// System.out.println("Before Allo:");
 				for(Inst z : y.instList) {
-					System.out.println(z.toString());
+					// System.out.println(z.toString());
 					if(z.rs1 instanceof VirtualRegister) {
 						z.rs1 = module.phyRegList.get(color.get(z.rs1));
 					}
@@ -576,9 +576,9 @@ public class RegisterAllocator {
 					newList.add(z);
 				}
 				y.instList = newList;
-				System.out.println("After Allo:");
-				for(Inst z : y.instList)
-					System.out.println(z.toString());
+				// System.out.println("After Allo:");
+				// for(Inst z : y.instList)
+				// 	System.out.println(z.toString());
 			}
 		}
 	}
