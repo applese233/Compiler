@@ -1362,7 +1362,7 @@ public class IRBuilder implements ASTVisitor {
 			return;
 		}
 		System.out.println("Binary: " + it.expr1.type.type + " " + it.expr2.type.type + " " + it.op);
-		if(it.expr1.type.type == basicType.String) {
+		if(it.expr1.type.type == basicType.String || (it.expr1.type.type == basicType.Function && it.expr1.type.functionReturnType.type == basicType.String)) {
 			switch(it.op) {
 				case "+": {
 					System.out.println("Concat.");
