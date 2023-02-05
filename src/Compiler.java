@@ -84,8 +84,8 @@ public class Compiler {
 			// debug.Visit(ASM);
 			System.out.println("alloca.");
 
-			new ASMRegisterAllocator(ASM).RegisterAllocate();
-			// new RegisterAllocator(ASM).VisitModule();
+			// new ASMRegisterAllocator(ASM).RegisterAllocate();
+			new RegisterAllocator(ASM).VisitModule();
 
 			System.out.println("gen.");
 			ASMPrinter result = new ASMPrinter("output.s");
